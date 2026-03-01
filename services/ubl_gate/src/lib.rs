@@ -8,6 +8,7 @@ use axum::{
     Json, Router,
 };
 use serde_json::{json, Value};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{error, info, warn};
@@ -19,6 +20,7 @@ use ubl_runtime::event_bus::EventBus;
 use ubl_runtime::manifest::GateManifest;
 use ubl_runtime::outbox_dispatcher::OutboxDispatcher;
 use ubl_runtime::policy_loader::InMemoryPolicyStorage;
+use ubl_runtime::rate_limit::{CanonRateLimiter, RateLimitConfig};
 use ubl_runtime::UblPipeline;
 
 mod advisor;
@@ -49,7 +51,7 @@ use console::{
 use events::{search_events, stream_events, to_hub_event};
 use llm::{ui_llm_panel, ui_llm_panel_stream};
 use mcp::{mcp_manifest, mcp_rpc, mcp_rpc_sse, mcp_ws_upgrade, openapi_spec, webmcp_manifest};
-use outbox::{deliver_emit_receipt_event, outbox_endpoint_from_env};
+use outbox::deliver_emit_receipt_event;
 use receipt::{
     get_passport_advisories, get_receipt, get_receipt_public_url, get_receipt_trace,
     narrate_receipt, narrate_receipt_stream, verify_advisory,
@@ -59,25 +61,30 @@ use registry::{
     registry_type_page, registry_type_version, registry_types,
 };
 use state::{AppState, McpTokenRateLimiter, WriteAccessPolicy};
-use utils::{
-    env_opt_trim, load_canon_rate_limiter, manifest_base_url_from_env,
-    public_receipt_origin_from_env, public_receipt_path_from_env,
-};
 
-pub async fn run(config: ubl_config::GateConfig) -> Result<(), Box<dyn std::error::Error>> {
-    info!("starting UBL CORE Gate");
+pub async fn run(config: ubl_config::AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+    info!(config = %config.to_redacted_log(), "starting UBL CORE Gate");
 
-    // Initialize shared components
+    std::fs::create_dir_all(&config.gate.data_dir)?;
+    let chips_dir = format!("{}/chips", config.gate.data_dir);
+    let ledger_dir = format!("{}/ledger", config.gate.data_dir);
+    std::fs::create_dir_all(&chips_dir)?;
+    std::fs::create_dir_all(&ledger_dir)?;
+    if config.storage.eventstore_enabled {
+        if let Some(parent) = Path::new(&config.storage.eventstore_path).parent() {
+            if !parent.as_os_str().is_empty() {
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+    }
+
     let _event_bus = Arc::new(EventBus::new());
-    let chips_dir = format!("{}/chips", config.data_dir);
-    let ledger_dir = format!("{}/ledger", config.data_dir);
     let backend = Arc::new(SledBackend::new(&chips_dir)?);
     let chip_store = Arc::new(ChipStore::new_with_rebuild(backend).await?);
 
     let storage = InMemoryPolicyStorage::new();
     let mut pipeline = UblPipeline::with_chip_store(Box::new(storage), chip_store.clone());
 
-    // Wire AdvisoryEngine for post-CHECK / post-WF advisory chips
     let advisory_engine = Arc::new(AdvisoryEngine::new(
         "b3:gate-passport".to_string(),
         "ubl-gate/0.1".to_string(),
@@ -85,176 +92,225 @@ pub async fn run(config: ubl_config::GateConfig) -> Result<(), Box<dyn std::erro
     ));
     pipeline.set_advisory_engine(advisory_engine.clone());
 
-    // Wire NDJSON audit ledger — append-only log alongside Sled CAS
     let ledger = Arc::new(ubl_runtime::ledger::NdjsonLedger::new(&ledger_dir));
     pipeline.set_ledger(ledger);
 
     let pipeline = Arc::new(pipeline);
 
-    // Bootstrap genesis chip — self-signed root of all policy
     match pipeline.bootstrap_genesis().await {
         Ok(cid) => info!(%cid, "genesis chip bootstrapped"),
         Err(e) => error!(error = %e, "FATAL: genesis bootstrap failed"),
     }
 
-    // Start outbox dispatcher workers when SQLite durability is enabled.
-    let durable_store = match DurableStore::from_env() {
-        Ok(Some(store)) => {
-            let store = Arc::new(store);
-            let workers: usize = std::env::var("UBL_OUTBOX_WORKERS")
-                .ok()
-                .and_then(|v| v.parse::<usize>().ok())
-                .unwrap_or(1)
-                .max(1);
-            let outbox_endpoint = outbox_endpoint_from_env();
-            if let Some(ref endpoint) = outbox_endpoint {
-                info!(workers, endpoint = %endpoint, "outbox dispatcher started");
-            } else {
-                warn!(
-                    workers,
-                    "UBL_OUTBOX_ENDPOINT not set; emit_receipt outbox events will be dropped"
-                );
-            }
-            let outbox_http_client = reqwest::Client::builder()
-                .timeout(Duration::from_secs(10))
-                .build()?;
-            metrics::set_outbox_pending(store.outbox_pending().unwrap_or(0));
+    let http_client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()?;
 
-            for worker_id in 0..workers {
-                let dispatcher = OutboxDispatcher::new((*store).clone()).with_backoff(2, 300);
-                let store_for_metrics = store.clone();
-                let outbox_endpoint_for_worker = outbox_endpoint.clone();
-                let outbox_http_client_for_worker = outbox_http_client.clone();
-                tokio::spawn(async move {
-                    loop {
-                        let processed = dispatcher
-                            .run_once_async(64, |event| {
-                                let outbox_endpoint = outbox_endpoint_for_worker.clone();
-                                let outbox_http_client = outbox_http_client_for_worker.clone();
-                                async move {
-                                    if event.event_type == "emit_receipt" {
-                                        return deliver_emit_receipt_event(
-                                            &outbox_http_client,
-                                            outbox_endpoint.as_deref(),
-                                            event,
-                                        )
-                                        .await;
+    let (shutdown_tx, shutdown_rx) = tokio::sync::watch::channel(false);
+    let mut task_handles: Vec<tokio::task::JoinHandle<()>> = Vec::new();
+
+    let durable_store = if config.storage.backend.eq_ignore_ascii_case("sqlite") {
+        match DurableStore::new(config.storage.effective_sqlite_dsn()) {
+            Ok(store) => {
+                let store = Arc::new(store);
+                let workers = config.storage.outbox_workers;
+                let outbox_endpoint = config.storage.outbox_endpoint.clone();
+                if let Some(ref endpoint) = outbox_endpoint {
+                    info!(workers, endpoint = %endpoint, "outbox dispatcher started");
+                } else {
+                    warn!(
+                        workers,
+                        "UBL_OUTBOX_ENDPOINT not set; emit_receipt outbox events will be dropped"
+                    );
+                }
+                metrics::set_outbox_pending(store.outbox_pending().unwrap_or(0));
+
+                for worker_id in 0..workers {
+                    let dispatcher = OutboxDispatcher::new((*store).clone()).with_backoff(2, 300);
+                    let store_for_metrics = store.clone();
+                    let outbox_endpoint_for_worker = outbox_endpoint.clone();
+                    let outbox_http_client_for_worker = http_client.clone();
+                    let mut shutdown = shutdown_rx.clone();
+                    task_handles.push(tokio::spawn(async move {
+                        loop {
+                            tokio::select! {
+                                _ = shutdown.changed() => break,
+                                processed = dispatcher.run_once_async(64, |event| {
+                                    let outbox_endpoint = outbox_endpoint_for_worker.clone();
+                                    let outbox_http_client = outbox_http_client_for_worker.clone();
+                                    async move {
+                                        if event.event_type == "emit_receipt" {
+                                            return deliver_emit_receipt_event(
+                                                &outbox_http_client,
+                                                outbox_endpoint.as_deref(),
+                                                event,
+                                            )
+                                            .await;
+                                        }
+                                        metrics::inc_outbox_retry();
+                                        Err(format!("unknown outbox event type: {}", event.event_type))
                                     }
-                                    metrics::inc_outbox_retry();
-                                    Err(format!("unknown outbox event type: {}", event.event_type))
+                                }) => {
+                                    match processed {
+                                        Ok(processed_count) => {
+                                            metrics::set_outbox_pending(
+                                                store_for_metrics.outbox_pending().unwrap_or_default(),
+                                            );
+                                            if processed_count == 0 {
+                                                tokio::time::sleep(Duration::from_millis(500)).await;
+                                            }
+                                        }
+                                        Err(e) => {
+                                            metrics::inc_outbox_retry();
+                                            warn!(worker_id, error = %e, "outbox worker error");
+                                            tokio::time::sleep(Duration::from_secs(1)).await;
+                                        }
+                                    }
                                 }
-                            })
-                            .await;
-
-                        match processed {
-                            Ok(processed_count) => {
-                                metrics::set_outbox_pending(
-                                    store_for_metrics.outbox_pending().unwrap_or_default(),
-                                );
-                                if processed_count == 0 {
-                                    tokio::time::sleep(Duration::from_millis(500)).await;
-                                }
-                            }
-                            Err(e) => {
-                                metrics::inc_outbox_retry();
-                                warn!(worker_id, error = %e, "outbox worker error");
-                                tokio::time::sleep(Duration::from_secs(1)).await;
                             }
                         }
-                    }
-                });
+                    }));
+                }
+                Some(store)
             }
-            Some(store)
+            Err(e) => {
+                warn!(error = %e, "durable store init failed for gate");
+                None
+            }
         }
-        Ok(None) => None,
-        Err(e) => {
-            warn!(error = %e, "durable store init failed for gate");
-            None
-        }
+    } else {
+        None
     };
 
-    let event_store = match EventStore::from_env() {
-        Ok(Some(store)) => Some(Arc::new(store)),
-        Ok(None) => None,
-        Err(e) => {
-            warn!(error = %e, "event store init failed for gate");
-            None
+    let event_store = if config.storage.eventstore_enabled {
+        match EventStore::open(&config.storage.eventstore_path) {
+            Ok(store) => Some(Arc::new(store)),
+            Err(e) => {
+                warn!(error = %e, "event store init failed for gate");
+                None
+            }
         }
+    } else {
+        None
     };
 
     if let Some(store) = event_store.clone() {
         let mut rx = pipeline.event_bus.subscribe();
-        tokio::spawn(async move {
+        let mut shutdown = shutdown_rx.clone();
+        task_handles.push(tokio::spawn(async move {
             loop {
-                match rx.recv().await {
-                    Ok(event) => {
-                        let hub = to_hub_event(&event);
-                        let stage = hub
-                            .get("stage")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("UNKNOWN")
-                            .to_string();
-                        let world = hub
-                            .get("@world")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("a/system")
-                            .to_string();
-                        metrics::inc_events_ingested(&stage, &world);
-                        if let Err(e) = store.append_event_json(&hub) {
-                            warn!(error = %e, "event store append failed");
+                tokio::select! {
+                    _ = shutdown.changed() => break,
+                    recv = rx.recv() => {
+                        match recv {
+                            Ok(event) => {
+                                let hub = to_hub_event(&event);
+                                let stage = hub
+                                    .get("stage")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("UNKNOWN")
+                                    .to_string();
+                                let world = hub
+                                    .get("@world")
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("a/system")
+                                    .to_string();
+                                metrics::inc_events_ingested(&stage, &world);
+                                if let Err(e) = store.append_event_json(&hub) {
+                                    warn!(error = %e, "event store append failed");
+                                }
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                                metrics::inc_events_stream_dropped("hub_lagged");
+                                warn!(skipped, "event hub ingestion lagged");
+                            }
+                            Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                         }
                     }
-                    Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
-                        metrics::inc_events_stream_dropped("hub_lagged");
-                        warn!(skipped, "event hub ingestion lagged");
-                    }
-                    Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                 }
             }
-        });
+        }));
         info!("event hub ingestion task started");
     }
 
     let manifest = Arc::new(GateManifest {
-        base_url: manifest_base_url_from_env(),
+        base_url: config.urls.manifest_base_url.clone(),
         ..GateManifest::default()
     });
-    let mcp_token_rate_limiter = Arc::new(McpTokenRateLimiter::from_env());
-    let write_access_policy = Arc::new(WriteAccessPolicy::from_env());
-    let public_receipt_origin = public_receipt_origin_from_env();
-    let public_receipt_path = public_receipt_path_from_env();
-    let genesis_pubkey_sha256 = env_opt_trim("UBL_GENESIS_PUBKEY_SHA256");
-    let release_commit = env_opt_trim("UBL_RELEASE_COMMIT");
-    let gate_binary_sha256 = env_opt_trim("UBL_GATE_BINARY_SHA256");
+    let mcp_token_rate_limiter = Arc::new(McpTokenRateLimiter::new(config.limits.mcp_token_rpm));
+    let write_access_policy = Arc::new(WriteAccessPolicy::from_config(&config.write));
+
+    let canon_rate_limiter = if config.limits.canon_rate_limit_enabled {
+        Some(Arc::new(CanonRateLimiter::new(
+            RateLimitConfig::per_minute(config.limits.canon_rate_limit_per_min),
+        )))
+    } else {
+        None
+    };
 
     let state = AppState {
         pipeline,
         chip_store,
         manifest,
         advisory_engine,
-        http_client: reqwest::Client::builder()
-            .timeout(Duration::from_secs(10))
-            .build()?,
-        canon_rate_limiter: load_canon_rate_limiter(),
+        http_client: http_client.clone(),
+        canon_rate_limiter,
         mcp_token_rate_limiter,
         durable_store,
         event_store,
-        public_receipt_origin,
-        public_receipt_path,
-        genesis_pubkey_sha256,
-        release_commit,
-        gate_binary_sha256,
+        public_receipt_origin: config.urls.public_receipt_origin.clone(),
+        public_receipt_path: config.urls.public_receipt_path.clone(),
+        genesis_pubkey_sha256: config.build.genesis_pubkey_sha256.clone(),
+        release_commit: config.build.release_commit.clone(),
+        gate_binary_sha256: config.build.gate_binary_sha256.clone(),
         write_access_policy,
     };
 
     let app = build_router(state);
 
-    let listener = tokio::net::TcpListener::bind(&config.bind).await?;
-    info!("gate listening on http://{}", config.bind);
+    let listener = tokio::net::TcpListener::bind(&config.gate.bind).await?;
+    info!("gate listening on http://{}", config.gate.bind);
 
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    let _ = shutdown_tx.send(true);
+    for handle in task_handles {
+        let mut handle = handle;
+        if tokio::time::timeout(Duration::from_secs(2), &mut handle)
+            .await
+            .is_err()
+        {
+            warn!("background task shutdown timeout; aborting task");
+            handle.abort();
+        }
+    }
+
     Ok(())
 }
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        let mut sigterm = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM handler");
+        sigterm.recv().await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+}
+
 fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(healthz))
@@ -356,7 +412,7 @@ mod tests {
             advisory_engine,
             http_client: reqwest::Client::new(),
             canon_rate_limiter: canon_limiter,
-            mcp_token_rate_limiter: Arc::new(McpTokenRateLimiter::from_env()),
+            mcp_token_rate_limiter: Arc::new(McpTokenRateLimiter::new(120)),
             durable_store: None,
             event_store: None,
             public_receipt_origin: "https://logline.world".to_string(),

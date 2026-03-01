@@ -12,7 +12,8 @@ use ubl_runtime::manifest::GateManifest;
 use ubl_runtime::rate_limit::CanonRateLimiter;
 use ubl_runtime::UblPipeline;
 
-use crate::utils::{csv_env, env_bool, extract_api_key};
+use crate::utils::extract_api_key;
+use ubl_config::GateWritePolicyConfig;
 
 #[derive(Clone)]
 pub(crate) struct AppState {
@@ -40,14 +41,9 @@ pub(crate) struct McpTokenRateLimiter {
 }
 
 impl McpTokenRateLimiter {
-    pub fn from_env() -> Self {
-        let per_minute = std::env::var("UBL_MCP_TOKEN_RPM")
-            .ok()
-            .and_then(|v| v.parse::<usize>().ok())
-            .unwrap_or(120)
-            .max(1);
+    pub fn new(per_minute: usize) -> Self {
         Self {
-            per_minute,
+            per_minute: per_minute.max(1),
             buckets: Arc::new(tokio::sync::RwLock::new(HashMap::new())),
         }
     }
@@ -102,37 +98,12 @@ pub(crate) struct WriteAccessPolicy {
 }
 
 impl WriteAccessPolicy {
-    pub fn from_env() -> Self {
-        let auth_required = env_bool("UBL_WRITE_AUTH_REQUIRED", false);
-        let api_keys = csv_env("UBL_WRITE_API_KEYS");
-        let public_worlds = {
-            let worlds = csv_env("UBL_PUBLIC_WRITE_WORLDS");
-            if worlds.is_empty() {
-                vec![
-                    "a/chip-registry/t/public".to_string(),
-                    "a/demo/t/dev".to_string(),
-                ]
-            } else {
-                worlds
-            }
-        };
-        let public_types = {
-            let types = csv_env("UBL_PUBLIC_WRITE_TYPES");
-            if types.is_empty() {
-                vec![
-                    "ubl/document".to_string(),
-                    "audit/advisory.request.v1".to_string(),
-                ]
-            } else {
-                types
-            }
-        };
-
+    pub fn from_config(cfg: &GateWritePolicyConfig) -> Self {
         Self {
-            auth_required,
-            api_keys,
-            public_worlds,
-            public_types,
+            auth_required: cfg.write_auth_required,
+            api_keys: cfg.write_api_keys.clone(),
+            public_worlds: cfg.public_write_worlds.clone(),
+            public_types: cfg.public_write_types.clone(),
         }
     }
 
