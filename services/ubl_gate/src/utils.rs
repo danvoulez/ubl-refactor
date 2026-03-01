@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
@@ -7,12 +5,10 @@ use axum::{
 };
 use serde_json::{json, Value};
 use tracing::warn;
-use tracing_subscriber::EnvFilter;
 
 use ubl_receipt::UnifiedReceipt;
 use ubl_runtime::{
     error_response::{ErrorCode, UblError},
-    rate_limit::{CanonRateLimiter, RateLimitConfig},
     rich_url::{build_public_receipt_link_v1, build_public_receipt_token_v1, PublicReceiptLink},
 };
 
@@ -20,40 +16,17 @@ use crate::state::{AppState, McpWsAuth};
 
 // ── Tracing ──────────────────────────────────────────────────────────────────
 
-pub fn init_tracing() {
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,ubl_runtime=debug,ubl_gate=debug"));
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter(env_filter)
-        .with_target(false)
-        .try_init();
-}
-
-// ── Env helpers ───────────────────────────────────────────────────────────────
-
-pub(crate) fn env_bool(name: &str, default: bool) -> bool {
-    std::env::var(name)
-        .ok()
-        .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "on"))
-        .unwrap_or(default)
-}
-
-pub(crate) fn env_opt_trim(name: &str) -> Option<String> {
-    std::env::var(name)
-        .ok()
+pub fn init_tracing(default_rust_log: &str) {
+    let rust_log = std::env::var_os("RUST_LOG")
+        .map(|v| v.to_string_lossy().to_string())
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty())
-}
+        .unwrap_or_else(|| default_rust_log.to_string());
 
-pub(crate) fn csv_env(name: &str) -> Vec<String> {
-    env_opt_trim(name)
-        .map(|s| {
-            s.split(',')
-                .map(|v| v.trim().to_string())
-                .filter(|v| !v.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default()
+    let _ = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new(rust_log))
+        .with_target(false)
+        .try_init();
 }
 
 pub(crate) fn extract_api_key(headers: &HeaderMap) -> Option<String> {
@@ -99,60 +72,6 @@ pub(crate) fn world_scope_allows(scope_world: &str, target_world: &str) -> bool 
         .strip_prefix(scope)
         .map(|rest| rest.starts_with('/'))
         .unwrap_or(false)
-}
-
-// ── URL / config helpers ──────────────────────────────────────────────────────
-
-pub(crate) fn public_receipt_origin_from_env() -> String {
-    if let Some(origin) = env_opt_trim("UBL_PUBLIC_RECEIPT_ORIGIN") {
-        return origin;
-    }
-    if let Some(domain) = env_opt_trim("UBL_RICH_URL_DOMAIN") {
-        let d = domain
-            .trim_start_matches("https://")
-            .trim_start_matches("http://");
-        return format!("https://{}", d);
-    }
-    "https://logline.world".to_string()
-}
-
-pub(crate) fn public_receipt_path_from_env() -> String {
-    let path = env_opt_trim("UBL_PUBLIC_RECEIPT_PATH").unwrap_or_else(|| "/r".to_string());
-    if path.starts_with('/') {
-        path
-    } else {
-        format!("/{}", path)
-    }
-}
-
-pub(crate) fn manifest_base_url_from_env() -> String {
-    if let Some(origin) = env_opt_trim("UBL_MCP_BASE_URL") {
-        return origin;
-    }
-    if let Some(origin) = env_opt_trim("UBL_API_BASE_URL") {
-        return origin;
-    }
-    if let Some(domain) = env_opt_trim("UBL_API_DOMAIN") {
-        let d = domain
-            .trim_start_matches("https://")
-            .trim_start_matches("http://");
-        return format!("https://{}", d);
-    }
-    "https://api.ubl.agency".to_string()
-}
-
-pub(crate) fn load_canon_rate_limiter() -> Option<Arc<CanonRateLimiter>> {
-    if !env_bool("UBL_CANON_RATE_LIMIT_ENABLED", true) {
-        return None;
-    }
-    let per_min = std::env::var("UBL_CANON_RATE_LIMIT_PER_MIN")
-        .ok()
-        .and_then(|v| v.parse::<u32>().ok())
-        .unwrap_or(120)
-        .max(1);
-    Some(Arc::new(CanonRateLimiter::new(
-        RateLimitConfig::per_minute(per_min),
-    )))
 }
 
 // ── Error builders ────────────────────────────────────────────────────────────

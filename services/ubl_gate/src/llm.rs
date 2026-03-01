@@ -24,7 +24,17 @@ use crate::events::LlmPanelQuery;
 use crate::registry::materialize_registry;
 use crate::state::AppState;
 use crate::templates::LlmPanelTemplate;
-use crate::utils::env_bool;
+
+fn env_bool(name: &str, default: bool) -> bool {
+    std::env::var_os(name)
+        .map(|v| {
+            matches!(
+                v.to_string_lossy().as_ref(),
+                "1" | "true" | "TRUE" | "yes" | "on"
+            )
+        })
+        .unwrap_or(default)
+}
 
 // ── Panel handler ─────────────────────────────────────────────────────────────
 
@@ -382,40 +392,41 @@ pub(crate) fn heuristic_analysis(page: &str, context: &Value) -> (String, String
 
 // ── LLM backend helpers ───────────────────────────────────────────────────────
 
+fn env_var(name: &str) -> Option<String> {
+    std::env::var_os(name).map(|v| v.to_string_lossy().to_string())
+}
+
 pub(crate) fn llm_is_enabled() -> bool {
     env_bool("UBL_ENABLE_REAL_LLM", false)
-        || std::env::var("UBL_LLM_BASE_URL")
-            .ok()
+        || env_var("UBL_LLM_BASE_URL")
             .filter(|s| !s.is_empty())
             .is_some()
 }
 
 pub(crate) fn llm_source_label() -> String {
-    if std::env::var("UBL_LLM_BASE_URL")
-        .ok()
+    if env_var("UBL_LLM_BASE_URL")
         .filter(|s| !s.is_empty())
         .is_some()
     {
-        let model = std::env::var("UBL_LLM_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
+        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "qwen3:4b".to_string());
         format!("local ollama ({})", model)
     } else {
-        let model = std::env::var("UBL_LLM_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string());
+        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "gpt-4o-mini".to_string());
         format!("openai ({})", model)
     }
 }
 
 pub(crate) fn resolve_llm_endpoint() -> Result<(String, String, Option<String>), String> {
-    let base_url = std::env::var("UBL_LLM_BASE_URL")
-        .ok()
-        .filter(|s| !s.is_empty());
+    let base_url = env_var("UBL_LLM_BASE_URL").filter(|s| !s.is_empty());
     if let Some(ref base) = base_url {
-        let model = std::env::var("UBL_LLM_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
+        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "qwen3:4b".to_string());
         let url = format!("{}/v1/chat/completions", base.trim_end_matches('/'));
         Ok((url, model, None))
     } else {
-        let key = std::env::var("OPENAI_API_KEY")
-            .map_err(|_| "Neither UBL_LLM_BASE_URL nor OPENAI_API_KEY is configured".to_string())?;
-        let model = std::env::var("UBL_LLM_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string());
+        let key = env_var("OPENAI_API_KEY").ok_or_else(|| {
+            "Neither UBL_LLM_BASE_URL nor OPENAI_API_KEY is configured".to_string()
+        })?;
+        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "gpt-4o-mini".to_string());
         Ok((
             "https://api.openai.com/v1/chat/completions".to_string(),
             model,
@@ -447,8 +458,7 @@ pub(crate) async fn call_real_llm(
     context: &Value,
 ) -> Result<String, String> {
     let (endpoint, model, api_key) = resolve_llm_endpoint()?;
-    let timeout_ms = std::env::var("UBL_LLM_TIMEOUT_MS")
-        .ok()
+    let timeout_ms = env_var("UBL_LLM_TIMEOUT_MS")
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(12_000);
 
@@ -506,8 +516,7 @@ pub(crate) async fn call_real_llm_stream_sse(
         }
     };
 
-    let timeout_ms = std::env::var("UBL_LLM_TIMEOUT_MS")
-        .ok()
+    let timeout_ms = env_var("UBL_LLM_TIMEOUT_MS")
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(30_000);
 

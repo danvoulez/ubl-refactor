@@ -2,28 +2,83 @@
 
 Fonte única de verdade: `crates/ubl_config/src/lib.rs`.
 
-## Blocos de configuração
+## Blocos de configuração (`AppConfig`)
 
-- **bind**: endereço/porta de escuta HTTP do Gate.
-- **data_dir**: diretório base para persistência local.
-- **storage**: backend e DSNs de persistência.
-- **obs**: observabilidade (logs/tracing/métricas).
+- `gate`: bind/data_dir.
+- `storage`: backend, DSNs, outbox e eventstore.
+- `obs`: nível de logs/tracing.
+- `urls`: URLs públicas/manifest.
+- `limits`: limites de canon e MCP.
+- `write`: política de escrita pública/autenticada.
+- `build`: metadados de build publicados pelo Gate.
 
-## ENVs e defaults (derivados do código)
+## ENVs e defaults/fallbacks
 
-- `UBL_GATE_BIND` (default: `0.0.0.0:4000`)
-- `UBL_DATA_DIR` (default: `./data`)
-- `UBL_STORE_BACKEND`
-- `UBL_STORE_DSN`
-- `UBL_IDEMPOTENCY_DSN`
-- `UBL_OUTBOX_DSN`
-- `UBL_OUTBOX_WORKERS`
-- `UBL_OUTBOX_ENDPOINT`
-- `UBL_EVENTSTORE_ENABLED`
-- `UBL_EVENTSTORE_PATH`
-- `RUST_LOG`
+### Gate
+
+- `UBL_GATE_BIND` → default `0.0.0.0:4000`.
+- `UBL_DATA_DIR` → default `./data`.
+
+### Storage
+
+- `UBL_STORE_BACKEND` → default `memory`.
+- `UBL_STORE_DSN` → opcional (trim; vazio = `None`).
+- `UBL_IDEMPOTENCY_DSN` → opcional (trim; vazio = `None`).
+- `UBL_OUTBOX_DSN` → opcional (trim; vazio = `None`).
+- `UBL_OUTBOX_WORKERS` → default `1`, mínimo `1`.
+- `UBL_OUTBOX_ENDPOINT` → opcional (trim; vazio = `None`).
+- `UBL_EVENTSTORE_ENABLED`:
+  - ENV ausente ⇒ `true`.
+  - ENV presente ⇒ `true` somente para `1|true|TRUE|yes|on`.
+- `UBL_EVENTSTORE_PATH` → default `./data/events`.
+
+DSN efetivo para backend sqlite segue prioridade:
+
+1. `UBL_STORE_DSN`
+2. `UBL_IDEMPOTENCY_DSN`
+3. `UBL_OUTBOX_DSN`
+4. fallback `file:./data/ubl.db?mode=rwc&_journal_mode=WAL`
+
+### Observabilidade
+
+- `RUST_LOG` → default `info,ubl_runtime=debug,ubl_gate=debug`.
+
+### URLs
+
+- `UBL_PUBLIC_RECEIPT_ORIGIN` → se ausente, fallback:
+  1. `UBL_RICH_URL_DOMAIN` (normalizado para `https://...`)
+  2. `https://logline.world`
+- `UBL_PUBLIC_RECEIPT_PATH` → default `/r` (sempre com `/` inicial).
+- `UBL_MCP_BASE_URL` → fallback:
+  1. `UBL_API_BASE_URL`
+  2. `UBL_API_DOMAIN` (normalizado para `https://...`)
+  3. `https://api.ubl.agency`
+
+### Limits
+
+- `UBL_CANON_RATE_LIMIT_ENABLED` → default `true` (`1|true|TRUE|yes|on`).
+- `UBL_CANON_RATE_LIMIT_PER_MIN` → default `120`, mínimo `1`.
+- `UBL_MCP_TOKEN_RPM` → default `120`, mínimo `1`.
+
+### Write policy
+
+- `UBL_WRITE_AUTH_REQUIRED` → default `false` (`1|true|TRUE|yes|on`).
+- `UBL_WRITE_API_KEYS` → CSV (trim de itens).
+- `UBL_PUBLIC_WRITE_WORLDS` → CSV; quando vazio, default:
+  - `a/chip-registry/t/public`
+  - `a/demo/t/dev`
+- `UBL_PUBLIC_WRITE_TYPES` → CSV; quando vazio, default:
+  - `ubl/document`
+  - `audit/advisory.request.v1`
+
+### Build info
+
+- `UBL_GENESIS_PUBKEY_SHA256` → opcional (trim; vazio = `None`).
+- `UBL_RELEASE_COMMIT` → opcional (trim; vazio = `None`).
+- `UBL_GATE_BINARY_SHA256` → opcional (trim; vazio = `None`).
 
 ## Referências cruzadas
 
+- Contrato de config: `crates/ubl_config/src/lib.rs`.
 - Consumo no serviço: `services/ubl_gate/src/main.rs` e `services/ubl_gate/src/lib.rs`.
 - Operação: `ops/gate/README.md`.
