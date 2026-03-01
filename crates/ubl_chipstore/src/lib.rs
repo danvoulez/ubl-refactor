@@ -291,13 +291,13 @@ impl ChipStore {
         let mut related = Vec::new();
 
         // Look for CID references in the data
-        self.extract_cids_recursive(chip_data, &mut related);
+        Self::extract_cids_recursive(chip_data, &mut related);
 
         related
     }
 
     /// Recursively extract CIDs from nested data
-    fn extract_cids_recursive(&self, value: &serde_json::Value, cids: &mut Vec<String>) {
+    fn extract_cids_recursive(value: &serde_json::Value, cids: &mut Vec<String>) {
         match value {
             serde_json::Value::String(s) => {
                 if s.starts_with("b3:") {
@@ -306,12 +306,12 @@ impl ChipStore {
             }
             serde_json::Value::Object(obj) => {
                 for val in obj.values() {
-                    self.extract_cids_recursive(val, cids);
+                    Self::extract_cids_recursive(val, cids);
                 }
             }
             serde_json::Value::Array(arr) => {
                 for val in arr {
-                    self.extract_cids_recursive(val, cids);
+                    Self::extract_cids_recursive(val, cids);
                 }
             }
             _ => {}

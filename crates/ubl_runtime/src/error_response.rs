@@ -193,6 +193,7 @@ impl ErrorCode {
             | Self::KnockMalformedNum
             | Self::KnockNumericLiteralNotAllowed
             | Self::KnockInputNormalization
+            | Self::KnockSchemaValidation
             | Self::InvalidChip
             | Self::CanonError
             | Self::FuelExhausted
