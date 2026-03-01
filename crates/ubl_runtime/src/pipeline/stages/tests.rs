@@ -445,7 +445,15 @@ fn vector_paths(root: &Path) -> Vec<PathBuf> {
 }
 
 fn load_vectors() -> Vec<ConformanceVector> {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/wasm/conformance/vectors/v1");
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = [
+        manifest_dir.join("../../docs/wasm/conformance/vectors/v1"),
+        manifest_dir.join("../../docs/archive/2026-03/legacy/wasm/conformance/vectors/v1"),
+    ]
+    .into_iter()
+    .find(|path| path.exists())
+    .unwrap_or_else(|| panic!("wasm conformance vectors directory not found"));
+
     vector_paths(&root)
         .into_iter()
         .map(|p| {

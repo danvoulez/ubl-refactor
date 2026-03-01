@@ -60,7 +60,7 @@ use registry::{
 };
 use state::{AppState, McpTokenRateLimiter, WriteAccessPolicy};
 use utils::{
-    env_opt_trim, init_tracing, load_canon_rate_limiter, manifest_base_url_from_env,
+    env_opt_trim, load_canon_rate_limiter, manifest_base_url_from_env,
     public_receipt_origin_from_env, public_receipt_path_from_env,
 };
 
@@ -215,9 +215,10 @@ pub async fn run(config: ubl_config::GateConfig) -> Result<(), Box<dyn std::erro
         info!("event hub ingestion task started");
     }
 
-    let mut manifest_cfg = GateManifest::default();
-    manifest_cfg.base_url = manifest_base_url_from_env();
-    let manifest = Arc::new(manifest_cfg);
+    let manifest = Arc::new(GateManifest {
+        base_url: manifest_base_url_from_env(),
+        ..GateManifest::default()
+    });
     let mcp_token_rate_limiter = Arc::new(McpTokenRateLimiter::from_env());
     let write_access_policy = Arc::new(WriteAccessPolicy::from_env());
     let public_receipt_origin = public_receipt_origin_from_env();
@@ -254,7 +255,7 @@ pub async fn run(config: ubl_config::GateConfig) -> Result<(), Box<dyn std::erro
     axum::serve(listener, app).await?;
     Ok(())
 }
-pub fn build_router(state: AppState) -> Router {
+fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/healthz", get(healthz))
         .route("/console", get(console_page))

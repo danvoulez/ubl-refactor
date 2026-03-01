@@ -20,7 +20,7 @@ use crate::state::{AppState, McpWsAuth};
 
 // ── Tracing ──────────────────────────────────────────────────────────────────
 
-pub(crate) fn init_tracing() {
+pub fn init_tracing() {
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("info,ubl_runtime=debug,ubl_gate=debug"));
     let _ = tracing_subscriber::fmt()

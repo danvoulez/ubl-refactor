@@ -580,7 +580,7 @@ pub(crate) async fn call_real_llm_stream_sse(
                 else { continue };
 
                 yield Ok::<SseEvent, Infallible>(
-                    SseEvent::default().event("token").data(token.to_string())
+                    SseEvent::default().event("token").data(token)
                 );
             }
         }

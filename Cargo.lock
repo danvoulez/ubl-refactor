@@ -2311,6 +2311,9 @@ dependencies = [
 name = "rb_vm"
 version = "0.1.0"
 dependencies = [
+ "blake3",
+ "ed25519-dalek",
+ "hex",
  "proptest",
  "serde_json",
  "ubl_vm",
