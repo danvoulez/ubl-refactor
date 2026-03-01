@@ -1,0 +1,38 @@
+name: Notify UBL-SHELLS
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  notify_shells:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send repository_dispatch to danvoulez/UBL-SHELLS
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.UBL_SHELLS_DISPATCH_TOKEN }}
+          SHELLS_REPO: danvoulez/UBL-SHELLS
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "UBL_SHELLS_DISPATCH_TOKEN is not configured."
+            echo "Skipping repository_dispatch to ${SHELLS_REPO}."
+            exit 0
+          fi
+
+          payload="$(jq -n \
+            --arg event_type "ubl-core-updated" \
+            --arg sha "${GITHUB_SHA}" \
+            --arg ref "${GITHUB_REF}" \
+            --arg repo "${GITHUB_REPOSITORY}" \
+            '{event_type: $event_type, client_payload: {core_sha: $sha, core_ref: $ref, core_repo: $repo}}')"
+
+          curl -fsSL -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/${SHELLS_REPO}/dispatches" \
+            -d "${payload}"

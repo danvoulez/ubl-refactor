@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-012",
+  "version": "v1",
+  "kind": "negative",
+  "category": "capability",
+  "description": "Network capability remains denied under deterministic profile.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute", "network"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_CAPABILITY_DENIED_NETWORK"
+  }
+}

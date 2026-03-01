@@ -1,0 +1,50 @@
+Timestamp (UTC): 2026-02-24T02:49:45Z
+PWD: /Users/ubl-ops/.codex/worktrees/91de/UBL-CORE
+
+## WF workflow references
+/Users/ubl-ops/UBL-CORE/.github/workflows/ci.yml:314:    name: "✅ WF"
+/Users/ubl-ops/UBL-CORE/.github/workflows/ci.yml:393:            "pipeline": "WA→CONTRACT→TR→WF",
+
+## Reproducibility/attestation references
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:53:- verify storage, policies, attestations, recording readiness.
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:114:4. fail-closed adapter/runtime attestation policy.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:39:     - `UBL_ATTEST_PUBKEY_SHA256` pins the attestation signer key (outside release assets).
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:43:5. Binary reproducibility check (observability)
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:57:   - Includes `runtime.public.env` (redacted), SQLite, bootstrap artifacts, attestation files.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:14:- Fail-closed for integrity, attestation, and capability checks.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:48:- [ ] Finalize attestation/integrity policy (`WASM_ATTESTATION_POLICY_V1.md`).
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:68:- Integrity/attestation failures
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:97:- [x] Fix integrity/attestation defects first.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:125:5. Integrity/attestation path is fail-closed and covered by negative vectors.
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:9:- runtime attestation checks
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:47:# Runtime self-attestation check
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:48:curl -sS http://localhost:4000/v1/runtime/attestation | jq .
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:103:Use runtime attestation endpoint and validate:
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:104:- `attestation.runtime_hash == attestation.runtime.runtime_hash`
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:106:- `attestation.did` and `kid` belong to current runtime signer
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:108:Escalate immediately if attestation verification fails across replicas.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:78:  attestations:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:81:    attest_dir: "./security/attestations"
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:144:- `supply_chain.attestations.verifier`: one of `cosign`, `dsse`.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:393:  attestations:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:396:    attest_dir: "./security/attestations"
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:80:- `attest`: attestation verification and fail-closed checks.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:114:- `UBL_ATTEST_DIR=./security/attestations`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:460:{"@type":"ubl/ai.passport","@id":"passport-gpt4o","@world":"a/lab/t/main","@ver":"1.0","issuer":"did:ubl:small","subject":"did:ubl:llm:gpt","model_family":"gpt","provider":"openai","capabilities":["propose","advise"],"expiry":"2026-12-31T23:59:59Z","evidence":{"attestation_cid":"b3:900"},"signature_did":"did:ubl:small#ed25519"}
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:41:- Reproducibility/attestation checks not executed for target commit.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:42:  - Command: `rg -n "reproducibility|attestation" /Users/ubl-ops/UBL-CORE/docs/ops`
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:43:  - Evidence: reproducibility/attestation references exist (for example `docs/ops/FOREVER_BOOTSTRAP.md`, `docs/ops/INCIDENT_RUNBOOK.md`), but no runbook or recorded check for the target commit is present.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:101:- fail-closed on required passport/attestation gaps
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:139:- attestation verification gate
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:189:- adapter/runtime attestation required in strict mode
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:255:- attestations available
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:286:- verify runtime/adapter attestations before execution
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:287:- attestation failure blocks run execution
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_LINEAGE_PROV_OBS_EP1.md:55:- on deterministic denial/failure (`FAIL_FUEL_CAP`, `DENY_NONDETERMINISTIC`, adapter/attestation deny).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:62:- attestation assets available
+
+## Promotion checklist references
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:46:  - Command: `rg -n "promotion checklist|LAB 256 -> LAB 512" /Users/ubl-ops/UBL-CORE/docs/ops`
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:47:  - Evidence: no promotion checklist doc or signoff log found in repo.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`

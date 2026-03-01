@@ -1,0 +1,25 @@
+{
+  "id": "WASM-POS-013",
+  "version": "v1",
+  "kind": "positive",
+  "category": "resource",
+  "description": "Execution within memory budget succeeds.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/memory_bounded.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute", "memory"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

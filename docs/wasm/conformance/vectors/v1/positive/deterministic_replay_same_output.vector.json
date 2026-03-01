@@ -1,0 +1,19 @@
+{
+  "id": "WASM-POS-002",
+  "version": "v1",
+  "kind": "positive",
+  "category": "determinism",
+  "description": "Replay with same input/profile produces same output and receipt claims.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/hash_stable.wasm",
+    "payload_ref": "fixtures/payloads/replay_case_a.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": ["wasm.profile", "wasm.module.sha256"]
+  }
+}

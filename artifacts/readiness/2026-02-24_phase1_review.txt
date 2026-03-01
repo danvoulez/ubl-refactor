@@ -1,0 +1,216 @@
+Timestamp (UTC): 2026-02-24T02:49:29Z
+PWD: /Users/ubl-ops/.codex/worktrees/91de/UBL-CORE
+
+## Topology references
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:23:### `ubl-0` (Small, control plane)
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:37:### `UBL-0` (Big, data plane)
+/Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md:37:### `ubl-0` (Small, control plane)
+/Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md:51:### `UBL-0` (Big, data plane)
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_PLATFORM_MOCKS_EP1.md:6:Scope: deterministic web/mobile/cli platform actors sending signed events to a single Big data plane, with Small observing and governing.
+
+## EPISODE_1_PROTOCOL.md (1-80)
+# Episode 1 Protocol (Small/Big)
+
+**Status**: active  
+**Date**: 2026-02-22  
+**Scope**: Televisionable + scientific test protocol for UBL
+
+## Purpose
+
+Episode 1 is a reproducible, auditable experiment that proves:
+
+1. deterministic execution for core decisions,
+2. LLM advisory without binding authority inside deterministic execution,
+3. board-ready evidence package (receipts + provenance + video hash).
+
+## Core Thesis
+
+- Every demo is a test.
+- Every test is a receipt trail.
+- Recording is public proof, but publish is fail-closed.
+
+## Planes and Roles
+
+### `ubl-0` (Small, control plane)
+
+Responsibilities:
+
+1. governance engine (judge),
+2. episode state machine (method lifecycle),
+3. publish/archive decision,
+4. evidence assembly and final bundle,
+5. TV/OBS orchestration.
+
+Non-responsibilities:
+
+1. heavy simulation/materialization execution.
+
+### `UBL-0` (Big, data plane)
+
+Responsibilities:
+
+1. deterministic heavy execution,
+2. multi-platform ingest,
+3. result production with receipts/evidence.
+
+Non-responsibilities:
+
+1. method governance decisions,
+2. editorial/TV layer.
+
+## Episode State Machine
+
+1. `PREFLIGHT`
+- verify storage, policies, attestations, recording readiness.
+
+2. `DRAFT`
+- method open for bounded edits.
+
+3. `SEALED`
+- method immutable (`protocol.seal`).
+
+4. `RUNNING`
+- Big executes, Small judges.
+
+5. `PUBLISHED` or `ARCHIVED`
+- fail-closed final state.
+
+## Mandatory Artifacts for Publish
+
+1. Verifiable receipts chain.
+2. Complete episode bundle (provenance + indexes).
+3. Video file hash sealed as `ubl/episode.video`.
+
+If any of the three is missing, result is `ARCHIVED (UNPUBLISHED)`.
+
+## Minimal Chip Taxonomy
+
+Episode control:
+
+1. `ubl/episode.start`
+2. `ubl/episode.publish`
+
+## Canary/dual-plane references
+/Users/ubl-ops/UBL-CORE/docs/ops/PRODUCTION_SLICE_CANARY.md:22:- 100% receipt emission success for scheduled canary events
+/Users/ubl-ops/UBL-CORE/docs/ops/PRODUCTION_SLICE_CANARY.md:28:- The old `make prod-slice-canary` script path was retired.
+/Users/ubl-ops/UBL-CORE/docs/ops/PRODUCTION_SLICE_CANARY.md:29:- Keep canary outputs in ledger form (receipt chain + external witness when needed).
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+
+## BOOTSTRAP_FINAL_TEXT.md (20-200)
+- LAB 256: laboratório de validação e ensaio completo.
+- LAB 512: gênese e produção histórica, com mudança mínima.
+
+Sem evidência completa no 256, não há promoção para o 512.
+
+## Episode 1 (televisionável e científico)
+
+Objetivo: provar que dá para combinar motor determinístico + aconselhamento LLM sem perder confiança.
+
+Prova final em três camadas:
+
+1. Receipts + ledgers (cadeia auditável).
+2. Lineage/proveniência (execução rastreável).
+3. Vídeo hasheado e selado no dossiê.
+
+## Definição oficial de papéis
+
+### `ubl-0` (Small, control plane)
+
+Faz:
+
+- método/governança (juiz),
+- coordenação de episódio,
+- publish/archive,
+- montagem de bundle final,
+- TV/OBS e narrativa operacional.
+
+Não faz:
+
+- execução pesada de simulação/dataset.
+
+### `UBL-0` (Big, data plane)
+
+Faz:
+
+- execução pesada determinística,
+- ingestão multi-plataforma,
+- produção de outputs e receipts de pesquisa,
+- telemetria de execução para auditoria.
+
+Não faz:
+
+- criação de método,
+- decisão de governança,
+- “TV”/camada editorial.
+
+## Entra/Sai pragmático
+
+### Entra no Small
+
+- engine de episódio (state machine),
+- governança de publish/archive,
+- integração OBS,
+- recepção e consolidação de evidências do Big.
+
+### Sai do Small
+
+- workload pesado de execução/simulação.
+
+### Entra no Big
+
+- execução determinística endurecida (fuel, perfil estável, policy restrita),
+- pipeline de ingestão multi-plataforma,
+- emissão de evidências de execução para o Small.
+
+### Sai do Big
+
+- UI/editorial,
+- lógica de comitê/decisão de episódio.
+
+## Correção técnica consolidada
+
+1. WASM já roda “por dentro” do TR no runtime atual.
+2. Comitê LLM nativo completo ainda é evolução do Small (não está fechado no estado atual).
+
+## Regras fixas
+
+1. URL pública de recibo: `https://logline.world/r#ubl:v1:<token>`.
+2. Contract-first + conformance obrigatórios.
+3. Sem `hard error` sem receipt nos fluxos relevantes.
+4. Backup, snapshot e freeze manifest desde o primeiro ciclo oficial.
+
+## Próximo passo único
+
+Executar a `TASKLIST.md` nova de LAB 512 com gate de promoção 256 -> 512.
+
+## Handoff/replication references
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:108:Escalate immediately if attestation verification fails across replicas.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_LINEAGE_PROV_OBS_EP1.md:356:- `/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_TEMPLATE.md` (optional field sync)
+
+## Failure/rollback references
+/Users/ubl-ops/UBL-CORE/docs/ops/EVENT_HUB.md:26:- Supports `rebuild_indexes()` for index recovery.
+/Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md:46:- Verify tunnel auto-recovers on reboot before production traffic.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:68:- Integrity/attestation failures
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:72:- Receipt claim binding failures
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:96:- [x] Run suite and classify failures by domain.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:86:4. Drain backlog; track metric recovery:
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:112:1. Inject one synthetic outbox failure.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:173:- parse failure
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:287:- attestation failure blocks run execution
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:66:On preflight failure:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:169:- `error_code` (on failures)
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:191:- predictable failures archive with explicit reasons.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_LINEAGE_PROV_OBS_EP1.md:55:- on deterministic denial/failure (`FAIL_FUEL_CAP`, `DENY_NONDETERMINISTIC`, adapter/attestation deny).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_VERIFIER_EP1.md:157:- reason and highest severity failures
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_VERIFIER_EP1.md:200:- `1`: verifier failure
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_VERIFIER_EP1.md:203:1. hard integrity failures => `FAIL`
+/Users/ubl-ops/UBL-CORE/docs/ops/OFFLINE_RECEIPT_VERIFICATION.md:35:- non-zero exit code on verification failure
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:21:- strict mode fail-closed: storage failure denies write.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:92:- durable failure in strict mode => `STORAGE_UNAVAILABLE` (deny).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:93:- durable failure in non-strict mode => warn + in-memory only.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:111:- failure to migrate in strict mode aborts startup.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:238:- read-only DB causes rotation failure and leaves env unchanged.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:258:- persistence failure aborts rotation and avoids partial runtime mutation.

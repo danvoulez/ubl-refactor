@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-010",
+  "version": "v1",
+  "kind": "negative",
+  "category": "verify",
+  "description": "Signer trust anchor mismatch is denied fail-closed.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/signed_unknown_anchor.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_VERIFY_TRUST_ANCHOR_MISMATCH"
+  }
+}

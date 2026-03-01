@@ -1,0 +1,23 @@
+
+[package]
+name = "ubl_ai_nrf1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+unicode-normalization = "0.1"
+leb128 = "0.2"
+blake3 = "1"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+ubl_unc1 = { path = "../ubl_unc1" }
+
+[dev-dependencies]
+hex-literal = "0.4"
+proptest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

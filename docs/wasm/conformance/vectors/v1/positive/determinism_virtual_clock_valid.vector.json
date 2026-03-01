@@ -1,0 +1,25 @@
+{
+  "id": "WASM-POS-011",
+  "version": "v1",
+  "kind": "positive",
+  "category": "determinism",
+  "description": "Virtualized clock source keeps deterministic profile stable.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/virtual_clock_stable.wasm",
+    "payload_ref": "fixtures/payloads/replay_case_b.json",
+    "capabilities": ["compute", "clock"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

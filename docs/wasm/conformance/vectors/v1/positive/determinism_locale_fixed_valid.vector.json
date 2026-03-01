@@ -1,0 +1,25 @@
+{
+  "id": "WASM-POS-019",
+  "version": "v1",
+  "kind": "positive",
+  "category": "determinism",
+  "description": "Fixed locale behavior produces deterministic output.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/locale_fixed_stable.wasm",
+    "payload_ref": "fixtures/payloads/replay_case_c.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

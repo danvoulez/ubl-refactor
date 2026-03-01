@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-016",
+  "version": "v1",
+  "kind": "negative",
+  "category": "resource",
+  "description": "High instruction loop exhausts fuel budget.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/fuel_hog.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_RESOURCE_FUEL_EXHAUSTED"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "WASM-POS-021",
+  "version": "v1",
+  "kind": "positive",
+  "category": "abi",
+  "description": "Generated strict-positive conformance vector WASM-POS-021 (release-pack 30/70).",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": [
+      "compute"
+    ]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

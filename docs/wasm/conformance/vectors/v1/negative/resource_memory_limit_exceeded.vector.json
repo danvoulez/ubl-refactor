@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-014",
+  "version": "v1",
+  "kind": "negative",
+  "category": "resource",
+  "description": "Memory limit overrun is denied with memory guard code.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/memory_hog.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute", "memory"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_RESOURCE_MEMORY_LIMIT"
+  }
+}

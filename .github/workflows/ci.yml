@@ -1,0 +1,431 @@
+name: UBL Self-Maintaining Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', 'README.md', '*.md']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['docs/**', 'README.md', '*.md']
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  knock:
+    name: "🚪 KNOCK"
+    runs-on: ubuntu-latest
+    outputs:
+      affected: ${{ steps.detect.outputs.affected }}
+      breaking: ${{ steps.detect.outputs.breaking }}
+      scope: ${{ steps.detect.outputs.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Changes
+        id: detect
+        run: |
+          chmod +x scripts/detect_affected.sh
+          tmp_out="$(mktemp)"
+          ./scripts/detect_affected.sh | tee "$tmp_out"
+          grep -E '^(affected|breaking|scope)=' "$tmp_out" >> "$GITHUB_OUTPUT"
+
+      - name: Report Scope
+        run: |
+          echo "📊 Scope: ${{ steps.detect.outputs.scope }}"
+          echo "📦 Affected: ${{ steps.detect.outputs.affected }}"
+          echo "⚠️  Breaking: ${{ steps.detect.outputs.breaking }}"
+
+  wa:
+    name: "👻 WA"
+    needs: knock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+        with:
+          components: clippy, rustfmt
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-
+            ${{ runner.os }}-
+
+      - name: Format Check
+        run: cargo fmt --all -- --check
+
+      - name: Build
+        run: cargo build --workspace --all-targets
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  contract:
+    name: "🧷 CONTRACT"
+    needs: wa
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-
+
+      - name: Enforce PR evidence fields
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          body_upper="$(printf '%s' "$PR_BODY" | tr '[:lower:]' '[:upper:]')"
+          required=(
+            "RED-FIRST EVIDENCE"
+            "GREEN EVIDENCE"
+            "CONFORMANCE"
+          )
+
+          for field in "${required[@]}"; do
+            if ! grep -Fq "$field" <<<"$body_upper"; then
+              echo "Missing required PR section: $field" >&2
+              exit 1
+            fi
+          done
+
+      - name: Run Contract Suite
+        run: |
+          chmod +x scripts/contract_suite.sh
+          scripts/contract_suite.sh --out-dir artifacts/contract
+
+      - name: Upload Contract Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-report
+          path: artifacts/contract
+          retention-days: 30
+
+  tr:
+    name: "⚡ TR"
+    needs: [wa, contract]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-
+
+      - name: Unit Tests
+        run: cargo test --workspace --lib
+
+      - name: Integration Tests
+        run: cargo test --workspace --test '*'
+
+      - name: Gate Contract Tests
+        run: cargo test -p ubl_gate
+
+      - name: Doc Tests
+        run: cargo test --workspace --doc
+
+      - name: Property Tests
+        run: cargo test --workspace --features property-tests
+        continue-on-error: true
+
+      - name: UNC-1 Strict Smoke
+        run: |
+          REQUIRE_UNC1_NUMERIC=true F64_IMPORT_MODE=reject \
+            cargo test -p ubl_runtime --lib 'knock::tests::knock_require_unc1_numeric_rejects_raw_float_literals' -- --exact
+          REQUIRE_UNC1_NUMERIC=true F64_IMPORT_MODE=reject \
+            cargo test -p ubl_runtime --lib 'knock::tests::knock_require_unc1_numeric_accepts_num_atoms' -- --exact
+
+  execute:
+    name: "🔧 EXECUTE"
+    needs: tr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Security Audit
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo audit
+
+      - name: Semver Check
+        if: github.event_name == 'pull_request'
+        run: |
+          cargo install cargo-semver-checks --locked || true
+          cargo semver-checks check-release --baseline-rev origin/main
+        continue-on-error: true
+
+  conformance:
+    name: "📏 CONFORMANCE"
+    needs: tr
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/
+          key: ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-
+
+      - name: Run Conformance Suite
+        run: |
+          chmod +x scripts/conformance_suite.sh
+          scripts/conformance_suite.sh --out-dir artifacts/conformance
+
+      - name: Upload Conformance Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-report
+          path: artifacts/conformance
+          retention-days: 30
+
+  simkit_stx:
+    name: "🧪 SIMKIT-STX"
+    needs: tr
+    if: ${{ needs.tr.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      REQUIRE_UNC1_NUMERIC: "true"
+      F64_IMPORT_MODE: "reject"
+      STX_ENABLED: "1"
+      STX_DIFF_PROB: "0.03"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect SimRunner
+        id: detect_simrunner
+        shell: bash
+        run: |
+          if [[ -f simrunner/main.py ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "SimRunner detected"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "SimRunner not detected; skipping STX run"
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.detect_simrunner.outputs.present == 'true'
+
+      - uses: actions/setup-python@v5
+        if: steps.detect_simrunner.outputs.present == 'true'
+        with:
+          python-version: "3.11"
+
+      - name: Install SimRunner deps
+        if: steps.detect_simrunner.outputs.present == 'true'
+        run: |
+          if [[ -f simrunner/requirements.txt ]]; then
+            python -m pip install --upgrade pip
+            python -m pip install -r simrunner/requirements.txt
+          fi
+
+      - name: Start Gate
+        if: steps.detect_simrunner.outputs.present == 'true'
+        run: |
+          cargo run -p ubl_gate > /tmp/ubl_gate.log 2>&1 &
+
+      - name: Wait for Gate Health
+        if: steps.detect_simrunner.outputs.present == 'true'
+        run: |
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:4000/healthz >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Gate did not become healthy" >&2
+          exit 1
+
+      - name: Run SimRunner STX
+        if: steps.detect_simrunner.outputs.present == 'true'
+        run: |
+          export UBL_GATE_URL="${UBL_GATE_URL:-http://127.0.0.1:4000/v1/chips}"
+          export RUN_ID="stx-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          python simrunner/main.py | tee /tmp/simrunner.log
+
+      - name: Assert STX verify has no failures
+        if: steps.detect_simrunner.outputs.present == 'true'
+        run: |
+          if grep -R -nE 'stx/receipt\.verify[^[:alnum:]]*(false|0)|"verify"[[:space:]]*:[[:space:]]*false' /tmp/simrunner.log simrunner 2>/dev/null; then
+            echo "Detected failed receipt verification in STX run" >&2
+            exit 1
+          fi
+
+      - name: Upload STX logs
+        if: always() && steps.detect_simrunner.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: simkit-stx-logs
+          path: |
+            /tmp/ubl_gate.log
+            /tmp/simrunner.log
+
+  wf:
+    name: "✅ WF"
+    needs: [knock, wa, contract, tr, execute, conformance, simkit_stx]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate quality gate
+        id: gate
+        run: |
+          fail=0
+
+          knock_result="${{ needs.knock.result }}"
+          wa_result="${{ needs.wa.result }}"
+          contract_result="${{ needs.contract.result }}"
+          tr_result="${{ needs.tr.result }}"
+          execute_result="${{ needs.execute.result }}"
+          conformance_result="${{ needs.conformance.result }}"
+          stx_result="${{ needs.simkit_stx.result }}"
+
+          echo "Scope:    ${{ needs.knock.outputs.scope }}"
+          echo "Affected: ${{ needs.knock.outputs.affected }}"
+          echo "Breaking: ${{ needs.knock.outputs.breaking }}"
+          echo ""
+          echo "Results:"
+          echo "  KNOCK:      ${knock_result}"
+          echo "  WA:         ${wa_result}"
+          echo "  CONTRACT:   ${contract_result}"
+          echo "  TR:         ${tr_result}"
+          echo "  EXECUTE:    ${execute_result}"
+          echo "  CONFORM:    ${conformance_result}"
+          echo "  SIMKIT-STX: ${stx_result}"
+
+          for pair in \
+            "knock:${knock_result}" \
+            "wa:${wa_result}" \
+            "contract:${contract_result}" \
+            "tr:${tr_result}" \
+            "execute:${execute_result}" \
+            "conformance:${conformance_result}"; do
+            name="${pair%%:*}"
+            result="${pair##*:}"
+            if [[ "${result}" != "success" ]]; then
+              echo "Required job failed: ${name} -> ${result}" >&2
+              fail=1
+            fi
+          done
+
+          if [[ "${stx_result}" != "success" && "${stx_result}" != "skipped" ]]; then
+            echo "SimKit STX must be success or skipped -> ${stx_result}" >&2
+            fail=1
+          fi
+
+          if [[ "$fail" -eq 0 ]]; then
+            echo "decision=ALLOW" >> "$GITHUB_ENV"
+            echo "🟢 DECISION: ALLOW"
+          else
+            echo "decision=DENY" >> "$GITHUB_ENV"
+            echo "🔴 DECISION: DENY"
+            exit 1
+          fi
+
+      - name: Generate signed receipt
+        if: always()
+        run: |
+          cat > wf_receipt.json <<EOF
+          {
+            "type": "ubl/ci_receipt",
+            "decision": "${{ env.decision }}",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "scope": "${{ needs.knock.outputs.scope }}",
+            "stages": {
+              "wa": "${{ needs.wa.result }}",
+              "contract": "${{ needs.contract.result }}",
+              "tr": "${{ needs.tr.result }}",
+              "execute": "${{ needs.execute.result }}",
+              "conformance": "${{ needs.conformance.result }}",
+              "simkit_stx": "${{ needs.simkit_stx.result }}"
+            },
+            "pipeline": "WA→CONTRACT→TR→WF",
+            "runtime": "github-actions",
+            "autopoietic": true
+          }
+          EOF
+
+          if command -v ublx >/dev/null 2>&1; then
+            ublx sign wf_receipt.json --output wf_receipt.jws
+            echo "✅ Receipt cryptographically signed"
+          else
+            echo "⚠️  ublx CLI not available, storing raw receipt"
+            cp wf_receipt.json wf_receipt.jws
+          fi
+
+          cat wf_receipt.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wf-receipt
+          path: wf_receipt.jws
+          retention-days: 30
+
+  publish:
+    name: "📦 Publish"
+    needs: wf
+    if: github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish Crates
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          chmod +x scripts/publish_ordered.sh
+          ./scripts/publish_ordered.sh

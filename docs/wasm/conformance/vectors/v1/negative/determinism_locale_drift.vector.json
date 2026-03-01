@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-013",
+  "version": "v1",
+  "kind": "negative",
+  "category": "determinism",
+  "description": "Locale-dependent drift triggers determinism violation.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/locale_nondeterministic.wasm",
+    "payload_ref": "fixtures/payloads/replay_case_c.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_DETERMINISM_VIOLATION"
+  }
+}

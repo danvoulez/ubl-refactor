@@ -1,0 +1,132 @@
+Timestamp (UTC): 2026-02-24T02:49:37Z
+PWD: /Users/ubl-ops/.codex/worktrees/91de/UBL-CORE
+
+## Ceremony/key birth references
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:160:  - key birth path
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+
+## Trust anchor/attestation references
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:53:- verify storage, policies, attestations, recording readiness.
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md:114:4. fail-closed adapter/runtime attestation policy.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:14:- Fail-closed for integrity, attestation, and capability checks.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:48:- [ ] Finalize attestation/integrity policy (`WASM_ATTESTATION_POLICY_V1.md`).
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:68:- Integrity/attestation failures
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:97:- [x] Fix integrity/attestation defects first.
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:125:5. Integrity/attestation path is fail-closed and covered by negative vectors.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:27:3. Genesis public key export + trust anchor
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:39:     - `UBL_ATTEST_PUBKEY_SHA256` pins the attestation signer key (outside release assets).
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:57:   - Includes `runtime.public.env` (redacted), SQLite, bootstrap artifacts, attestation files.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:157:  - trust anchor PEM path
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:185:- genesis public key hash published as trust anchor
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:41:- Reproducibility/attestation checks not executed for target commit.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:42:  - Command: `rg -n "reproducibility|attestation" /Users/ubl-ops/UBL-CORE/docs/ops`
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:43:  - Evidence: reproducibility/attestation references exist (for example `docs/ops/FOREVER_BOOTSTRAP.md`, `docs/ops/INCIDENT_RUNBOOK.md`), but no runbook or recorded check for the target commit is present.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:9:- runtime attestation checks
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:47:# Runtime self-attestation check
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:48:curl -sS http://localhost:4000/v1/runtime/attestation | jq .
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:103:Use runtime attestation endpoint and validate:
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:104:- `attestation.runtime_hash == attestation.runtime.runtime_hash`
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:106:- `attestation.did` and `kid` belong to current runtime signer
+/Users/ubl-ops/UBL-CORE/docs/ops/INCIDENT_RUNBOOK.md:108:Escalate immediately if attestation verification fails across replicas.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:101:- fail-closed on required passport/attestation gaps
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:139:- attestation verification gate
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:189:- adapter/runtime attestation required in strict mode
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:255:- attestations available
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:286:- verify runtime/adapter attestations before execution
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:287:- attestation failure blocks run execution
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_LINEAGE_PROV_OBS_EP1.md:55:- on deterministic denial/failure (`FAIL_FUEL_CAP`, `DENY_NONDETERMINISTIC`, adapter/attestation deny).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:78:  attestations:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:81:    attest_dir: "./security/attestations"
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:144:- `supply_chain.attestations.verifier`: one of `cosign`, `dsse`.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:393:  attestations:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:396:    attest_dir: "./security/attestations"
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:62:- attestation assets available
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:80:- `attest`: attestation verification and fail-closed checks.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:114:- `UBL_ATTEST_DIR=./security/attestations`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:460:{"@type":"ubl/ai.passport","@id":"passport-gpt4o","@world":"a/lab/t/main","@ver":"1.0","issuer":"did:ubl:small","subject":"did:ubl:llm:gpt","model_family":"gpt","provider":"openai","capabilities":["propose","advise"],"expiry":"2026-12-31T23:59:59Z","evidence":{"attestation_cid":"b3:900"},"signature_did":"did:ubl:small#ed25519"}
+
+## Authorship/identity/ingress references
+/Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md:30:- Ensure tunnel ingress has explicit terminal catch-all:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:14:- Big loads a strict subset (`determinism`, `supply_chain`, `lineage`, `identity`).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:134:identity_policy:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:281:- required: `episode_id`, `passport_cid`, `model_identity`, `prompt_hash`, `input_hash`, `advisory_hash`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GOVERNANCE_YAML_AND_SCHEMAS_EP1.md:455:identity_policy:
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md:22:If direct/off-Cloudflare ingress is introduced, dedicated PKI/certificate governance is required before go-live.
+/Users/ubl-ops/UBL-CORE/docs/ops/HOST_LOCKDOWN_AND_CLEANUP.md:13:- Service identity: dedicated no-login user (default `ubl`).
+/Users/ubl-ops/UBL-CORE/docs/ops/HOST_LOCKDOWN_AND_CLEANUP.md:16:- Break-glass admin: separate administrative identity.
+/Users/ubl-ops/UBL-CORE/docs/ops/HOST_LOCKDOWN_AND_CLEANUP.md:79:- `workzone_cleanup.sh` never deletes genesis identity artifacts or runtime db paths.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:61:| `crates/ubl_did` + `crates/ubl_kms` | yes | yes | Identity/signing for ingress and issuance. |
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:318:- `episode_id`, `passport_cid`, `model_identity`, `prompt_hash`, `input_hash`, `advisory_hash`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_WORKSPACE_E_SCHEMAS_EP1.md:325:{"@type":"ubl/advisory","@id":"ep-001-adv-1","@world":"a/lab/t/main","@ver":"1.0","episode_id":"001","passport_cid":"b3:301","model_identity":{"family":"gpt","version":"4o"},"prompt_hash":"b3:302","input_hash":"b3:303","advisory_hash":"b3:304"}
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:13:- replay across process restart for the same authorship scope and nonce.
+
+## Break-glass/operator/admin references
+/Users/ubl-ops/UBL-CORE/docs/ops/MCP_RUNTIME_VALIDATION.md:155:  - `X-API-Key` (optional fallback/break-glass).
+/Users/ubl-ops/UBL-CORE/docs/ops/MCP_RUNTIME_VALIDATION.md:164:- Keep API keys only for emergency bootstrap or break-glass operations.
+/Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md:77:- Record every break-glass action in incident notes.
+/Users/ubl-ops/UBL-CORE/docs/ops/HOST_LOCKDOWN_AND_CLEANUP.md:65:- Operator/break-glass:
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+
+## Secret handling/leak references
+/Users/ubl-ops/UBL-CORE/docs/ops/EVENT_HUB.md:13:  - `chip`, `receipt`, `perf`, `actor`, `artifacts`, `runtime`, `labels`
+/Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md:15:- Store token in secrets manager, not in shell history.
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:161:- `/Users/ubl-ops/.secrets/minio.env`
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:202:a/<app>/t/<tenant>/artifacts/<artifact_type>/<yyyy>/<mm>/<dd>/<id>.v<major>.<ext>
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:208:a/logline/t/main/artifacts/source.bundle/2026/02/23/source-53b43ced.v1.tar.gz
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:221:- `ubl/type=<artifact_type>`
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:232:  "@type": "ubl/artifact",
+/Users/ubl-ops/UBL-CORE/docs/ops/LOCAL_SOURCE_TRUST_FLOW.md:236:  "artifact_type": "source.bundle",
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:8:Bootstrap is treated as a non-repeatable genesis event: artifacts not captured at genesis may be impossible to reconstruct with confidence later.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:20:   - Rule: if artifact exists, script logs `already exists` and never overwrites.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:57:   - Includes `runtime.public.env` (redacted), SQLite, bootstrap artifacts, attestation files.
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:58:   - Optional secret inclusion: `UBL_SNAPSHOT_INCLUDE_RUNTIME_SECRETS=true` adds full `runtime.env` (default is `false`).
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:156:- References linked inside the artifact:
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:170:### Local artifacts
+/Users/ubl-ops/UBL-CORE/docs/ops/FOREVER_BOOTSTRAP.md:189:- encrypted backup cron installed and first backup artifact created
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:78:- bundle JSON artifacts
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:116:- publish path archives on any mandatory artifact gap
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:175:- CAS for content artifacts
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:206:- artifact directory control
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:224:Mandatory episode artifacts:
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_IMPLEMENTACAO_EP1.md:238:- verifier can run offline on produced artifact set
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_VERIFIER_EP1.md:82:- verify signature / auth chain (`current` and `prev` stage secrets)
+/Users/ubl-ops/UBL-CORE/docs/ops/HOST_LOCKDOWN_AND_CLEANUP.md:79:- `workzone_cleanup.sh` never deletes genesis identity artifacts or runtime db paths.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:6:Scope: harden GAP-6 (nonce replay) and GAP-15 (stage secret rotation) for fail-closed Episode 1 operations.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:134:1. move current stage secret to previous.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:135:2. derive new stage secret from new signing key.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:141:- `derive_stage_secret` exists (keyed BLAKE3).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:142:- `put_stage_secrets(current, prev)` exists.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:143:- `get_stage_secrets()` and boot-time env apply exist.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:152:`stage_secret = blake3_keyed(signing_key_bytes, "ubl.stage_secret.v1")`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:164:- `stage_secrets(id=1, current, prev, rotated_at)`.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:169:CREATE TABLE IF NOT EXISTS stage_secrets (
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:171:  current_secret TEXT NOT NULL,
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:172:  prev_secret    TEXT,
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:186:- `load_stage_secrets() -> Result<Option<StageSecrets>, DurableError>`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:187:- `store_stage_secrets(current, prev, rotated_at, rotation_cid) -> Result<()>`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:206:3. read persisted stage secrets.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:220:1. derive new signing key and new stage secret.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:221:2. snapshot previous stage secret.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:222:3. persist row first (`store_stage_secrets`).
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:227:- if persist fails, do not mutate env runtime secrets.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:257:- restart restores same secret chain from DB.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_GAPS_6_15_EP1.md:270:1. Add DB migrations for scoped nonces and stage secret metadata columns.
+/Users/ubl-ops/UBL-CORE/docs/ops/CHATGPT_CONNECTOR_ONBOARDING.md:32:- generated chips + responses under `artifacts/onboarding-chatgpt-<ts>/`
+/Users/ubl-ops/UBL-CORE/docs/ops/CHATGPT_CONNECTOR_ONBOARDING.md:79:  - `artifacts/onboarding-chatgpt-<ts>/connector.did.json`
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:6:Scope: one-command deterministic Episode 1 execution from preflight to verification and final artifacts.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:139:- `POST /v1/chips` for platform events and run artifacts
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:185:- `VERIFY_ONLY`: run verifier only against existing artifact set.
+/Users/ubl-ops/UBL-CORE/docs/ops/episode-1/specs/SPEC_EPISODE_RUNNER_EP1.md:189:- one command executes complete flow and produces expected artifacts.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:31:  - Evidence: `artifacts/contract/latest.json`, `artifacts/contract/latest.md`.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:35:  - Evidence: `artifacts/conformance/latest.json`, `artifacts/conformance/latest.md`.
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:52:  - Command: `bash -lc "mkdir -p /Users/ubl-ops/UBL-CORE/artifacts/readiness && { echo \\\"Timestamp (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)\\\"; echo \\\"PWD: $(pwd)\\\"; echo; echo \\\"## Git state\\\"; git -C /Users/ubl-ops/UBL-CORE rev-parse --abbrev-ref HEAD; git -C /Users/ubl-ops/UBL-CORE rev-parse HEAD; git -C /Users/ubl-ops/UBL-CORE status -sb; echo; echo \\\"## Ops docs index\\\"; ls -la /Users/ubl-ops/UBL-CORE/docs/ops; echo; echo \\\"## Control/data plane references\\\"; rg -n \\\"control plane|data plane|dual-plane|handoff|rollback|topology|canary\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## EPISODE_1_PROTOCOL.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROTOCOL.md; echo; echo \\\"## BOOTSTRAP_FINAL_TEXT.md (excerpt)\\\"; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/BOOTSTRAP_FINAL_TEXT.md; echo; echo \\\"## Cloudflare docs\\\"; sed -n '1,160p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_EDGE_BASELINE.md; echo; sed -n '1,200p' /Users/ubl-ops/UBL-CORE/docs/ops/CLOUDFLARE_TUNNEL_GO_LIVE.md; echo; echo \\\"## Security/identity references\\\"; rg -n \\\"ceremony|attestation|break-glass|trust anchor|authorship|identity\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; echo; echo \\\"## Reproducibility/attestation references\\\"; rg -n \\\"reproducibility|attestation|promotion checklist|LAB 256|LAB 512\\\" /Users/ubl-ops/UBL-CORE/docs/ops || true; } > /Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt"`
+/Users/ubl-ops/UBL-CORE/docs/ops/READINESS_EVIDENCE.md:53:  - Evidence: `/Users/ubl-ops/UBL-CORE/artifacts/readiness/2026-02-23_phase0-6_blockers.txt`.
+/Users/ubl-ops/UBL-CORE/docs/ops/ROLLOUT_AUTOMATION.md:10:Required artifacts:
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:39:- baseline evidence artifact under `artifacts/wasm-conformance/`
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:77:- conformance report under `artifacts/wasm-conformance/`
+/Users/ubl-ops/UBL-CORE/docs/ops/WASM_RUNTIME_HARDENING_TASKLIST.md:90:- report artifact attached to CI run.
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROMPTS_INTAKE.md:45:- Scope: nonce persistence TTL (GAP-6) + stage secret rotation persistence chain (GAP-15).
+/Users/ubl-ops/UBL-CORE/docs/ops/EPISODE_1_PROMPTS_INTAKE.md:55:- Scope: one-command runner (`just episode-1`), full orchestration, finalize, verify, artifact pack.
+/Users/ubl-ops/UBL-CORE/docs/ops/OFFLINE_RECEIPT_VERIFICATION.md:39:- can verify bootstrap receipt #0 offline from exported artifacts

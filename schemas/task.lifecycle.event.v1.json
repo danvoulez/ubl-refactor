@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ubl.agency/schemas/task.lifecycle.event.v1.json",
+  "title": "task.lifecycle.event.v1",
+  "type": "object",
+  "required": [
+    "@type",
+    "@id",
+    "@ver",
+    "@world",
+    "task_id",
+    "track",
+    "title",
+    "state",
+    "depends_on",
+    "evidence",
+    "actor"
+  ],
+  "properties": {
+    "@type": { "const": "task.lifecycle.event.v1" },
+    "@id": { "type": "string", "minLength": 1 },
+    "@ver": { "type": "string", "minLength": 1 },
+    "@world": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "track": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "state": {
+      "type": "string",
+      "enum": ["open", "blocked", "in_progress", "done", "canceled"]
+    },
+    "depends_on": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "blocker_code": { "type": "string", "minLength": 1 },
+    "notes": { "type": "string" },
+    "actor": {
+      "type": "object",
+      "required": ["did", "role"],
+      "properties": {
+        "did": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "enum": ["personal", "platform", "operator", "noc"] }
+      },
+      "additionalProperties": true
+    },
+    "@cap": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "done" } } },
+      "then": { "properties": { "evidence": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "state": { "const": "blocked" } } },
+      "then": { "required": ["blocker_code"] }
+    }
+  ],
+  "additionalProperties": true
+}

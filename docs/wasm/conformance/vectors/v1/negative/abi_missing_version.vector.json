@@ -1,0 +1,17 @@
+{
+  "id": "WASM-NEG-001",
+  "version": "v1",
+  "kind": "negative",
+  "category": "abi",
+  "description": "Missing abi_version is denied with canonical ABI error code.",
+  "profile": "deterministic_v1",
+  "input": {
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_ABI_MISSING_VERSION"
+  }
+}

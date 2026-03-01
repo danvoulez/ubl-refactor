@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ubl-core/docs/wasm/conformance/vector.schema.v1.json",
+  "title": "UBL WASM Conformance Vector V1",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "kind",
+    "category",
+    "description",
+    "profile",
+    "input",
+    "expected"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^WASM-(POS|NEG)-[0-9]{3}$"
+    },
+    "version": {
+      "const": "v1"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["positive", "negative"]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "abi",
+        "verify",
+        "capability",
+        "determinism",
+        "resource",
+        "receipt_binding"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 8
+    },
+    "profile": {
+      "type": "string",
+      "enum": ["deterministic_v1"]
+    },
+    "input": {
+      "type": "object",
+      "required": ["abi_version", "module_ref", "payload_ref"],
+      "properties": {
+        "abi_version": {
+          "type": "string"
+        },
+        "module_ref": {
+          "type": "string"
+        },
+        "payload_ref": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "expected": {
+      "type": "object",
+      "required": ["decision", "code"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["allow", "deny"]
+        },
+        "code": {
+          "type": "string"
+        },
+        "receipt_claims": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

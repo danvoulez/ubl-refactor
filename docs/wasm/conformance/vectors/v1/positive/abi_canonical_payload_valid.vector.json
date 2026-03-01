@@ -1,0 +1,25 @@
+{
+  "id": "WASM-POS-016",
+  "version": "v1",
+  "kind": "positive",
+  "category": "abi",
+  "description": "Canonical payload bytes pass ABI contract without mutation.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/canonical_payload.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

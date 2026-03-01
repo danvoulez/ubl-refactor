@@ -1,0 +1,25 @@
+{
+  "id": "WASM-POS-004",
+  "version": "v1",
+  "kind": "positive",
+  "category": "abi",
+  "description": "Extended ABI input with metadata remains valid.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/extended_valid.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.verify.status"
+    ]
+  }
+}

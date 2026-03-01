@@ -1,0 +1,18 @@
+{
+  "id": "WASM-NEG-003",
+  "version": "v1",
+  "kind": "negative",
+  "category": "capability",
+  "description": "Network capability request is denied under deterministic_v1.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute", "network"]
+  },
+  "expected": {
+    "decision": "deny",
+    "code": "WASM_CAPABILITY_DENIED_NETWORK"
+  }
+}

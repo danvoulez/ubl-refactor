@@ -1,0 +1,301 @@
+name: Release From Tag
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name (example: v0.1.0-core-baseline)"
+        required: true
+        type: string
+      target:
+        description: "Target ref/commit used only if tag does not exist"
+        required: false
+        default: "main"
+        type: string
+      official:
+        description: "Mark release as official/latest"
+        required: true
+        default: true
+        type: boolean
+      notes:
+        description: "Optional extra notes appended to release body"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release_on_tag_push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      TAG_NAME: ${{ github.ref_name }}
+      ATTEST_DIR: release-artifacts/docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build docs manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/docs_attest.sh
+          mkdir -p "$ATTEST_DIR"
+          bash scripts/docs_attest.sh build-manifest \
+            --out "$ATTEST_DIR/manifest.json" \
+            --tag "$TAG_NAME"
+
+      - name: Prepare docs attestation key (optional)
+        id: key
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${{ secrets.DOCS_ATTEST_PRIVATE_KEY_PEM_B64 }}" ]]; then
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          key_path="$RUNNER_TEMP/docs_attest_key.pem"
+          pub_path="$ATTEST_DIR/docs_attest_signer.pub.pem"
+
+          printf '%s' "${{ secrets.DOCS_ATTEST_PRIVATE_KEY_PEM_B64 }}" | base64 -d > "$key_path"
+          chmod 600 "$key_path"
+
+          if [[ -n "${{ secrets.DOCS_ATTEST_PUBLIC_KEY_PEM_B64 }}" ]]; then
+            printf '%s' "${{ secrets.DOCS_ATTEST_PUBLIC_KEY_PEM_B64 }}" | base64 -d > "$pub_path"
+          else
+            if [[ -n "${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}" ]]; then
+              openssl pkey -in "$key_path" -passin "pass:${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}" -pubout -out "$pub_path"
+            else
+              openssl pkey -in "$key_path" -pubout -out "$pub_path"
+            fi
+          fi
+          chmod 644 "$pub_path"
+
+          echo "has_key=true" >> "$GITHUB_OUTPUT"
+          echo "key_path=$key_path" >> "$GITHUB_OUTPUT"
+          echo "pub_path=$pub_path" >> "$GITHUB_OUTPUT"
+
+      - name: Sign docs manifest (if key configured)
+        if: steps.key.outputs.has_key == 'true'
+        shell: bash
+        env:
+          DOCS_ATTEST_KEY_PASSPHRASE: ${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}
+          DOCS_ATTEST_WITH_UBL_CID: "true"
+        run: |
+          set -euo pipefail
+          bash scripts/docs_attest.sh sign \
+            --manifest "$ATTEST_DIR/manifest.json" \
+            --key "${{ steps.key.outputs.key_path }}" \
+            --pub "${{ steps.key.outputs.pub_path }}" \
+            --out "$ATTEST_DIR/attestation.json" \
+            --sig-out "$ATTEST_DIR/attestation.sig"
+
+      - name: Write unsigned attestation fallback
+        if: steps.key.outputs.has_key != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest_sha="$(sha256sum "$ATTEST_DIR/manifest.json" | awk '{print $1}')"
+          commit_sha="$(git rev-parse HEAD)"
+          generated_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          jq -n \
+            --arg generated_at "$generated_at" \
+            --arg commit "$commit_sha" \
+            --arg tag "$TAG_NAME" \
+            --arg manifest_path "$ATTEST_DIR/manifest.json" \
+            --arg manifest_sha "$manifest_sha" \
+            '{
+              "@type":"ubl/docs-attestation",
+              "@ver":"1.0",
+              "@world":"a/logline/t/oss",
+              "generated_at":$generated_at,
+              "git":{"commit":$commit,"tag":$tag},
+              "manifest":{"path":$manifest_path,"sha256":$manifest_sha,"cid":null},
+              "signature":{"status":"unsigned","reason":"DOCS_ATTEST_PRIVATE_KEY_PEM_B64 not configured"}
+            }' > "$ATTEST_DIR/attestation.json"
+
+      - name: Create/Update Candidate Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: UBL-CORE ${{ env.TAG_NAME }}
+          generate_release_notes: true
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: false
+          files: |
+            ${{ env.ATTEST_DIR }}/manifest.json
+            ${{ env.ATTEST_DIR }}/attestation.json
+            ${{ env.ATTEST_DIR }}/*.sig
+            ${{ env.ATTEST_DIR }}/*.sig.b64
+            ${{ env.ATTEST_DIR }}/*.pub.pem
+          body: |
+            Automated release candidate from pushed tag.
+            Promote to official/latest using this workflow in manual mode.
+
+  release_manual:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      TAG_NAME: ${{ inputs.tag }}
+      TARGET_REF: ${{ inputs.target }}
+      ATTEST_DIR: release-artifacts/docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure Tag Exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git rev-parse "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
+            echo "Tag already exists: ${TAG_NAME}"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${TAG_NAME}" "${TARGET_REF}" -m "Official UBL-CORE tag ${TAG_NAME}"
+            git push origin "refs/tags/${TAG_NAME}"
+            echo "Tag created and pushed: ${TAG_NAME} -> ${TARGET_REF}"
+          fi
+
+      - name: Checkout tag content
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout "refs/tags/${TAG_NAME}"
+
+      - name: Compute Release Flags
+        id: flags
+        shell: bash
+        run: |
+          if [[ "${{ inputs.official }}" == "true" ]]; then
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
+            echo "mode=official" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+            echo "mode=candidate" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build docs manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/docs_attest.sh
+          mkdir -p "$ATTEST_DIR"
+          bash scripts/docs_attest.sh build-manifest \
+            --out "$ATTEST_DIR/manifest.json" \
+            --tag "$TAG_NAME"
+
+      - name: Prepare docs attestation key (optional)
+        id: key
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${{ secrets.DOCS_ATTEST_PRIVATE_KEY_PEM_B64 }}" ]]; then
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          key_path="$RUNNER_TEMP/docs_attest_key.pem"
+          pub_path="$ATTEST_DIR/docs_attest_signer.pub.pem"
+
+          printf '%s' "${{ secrets.DOCS_ATTEST_PRIVATE_KEY_PEM_B64 }}" | base64 -d > "$key_path"
+          chmod 600 "$key_path"
+
+          if [[ -n "${{ secrets.DOCS_ATTEST_PUBLIC_KEY_PEM_B64 }}" ]]; then
+            printf '%s' "${{ secrets.DOCS_ATTEST_PUBLIC_KEY_PEM_B64 }}" | base64 -d > "$pub_path"
+          else
+            if [[ -n "${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}" ]]; then
+              openssl pkey -in "$key_path" -passin "pass:${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}" -pubout -out "$pub_path"
+            else
+              openssl pkey -in "$key_path" -pubout -out "$pub_path"
+            fi
+          fi
+          chmod 644 "$pub_path"
+
+          echo "has_key=true" >> "$GITHUB_OUTPUT"
+          echo "key_path=$key_path" >> "$GITHUB_OUTPUT"
+          echo "pub_path=$pub_path" >> "$GITHUB_OUTPUT"
+
+      - name: Require docs attestation key for official releases
+        if: inputs.official == true
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.key.outputs.has_key }}" != "true" ]]; then
+            echo "[error] official release requires DOCS_ATTEST_PRIVATE_KEY_PEM_B64 secret"
+            exit 1
+          fi
+
+      - name: Sign docs manifest (if key configured)
+        if: steps.key.outputs.has_key == 'true'
+        shell: bash
+        env:
+          DOCS_ATTEST_KEY_PASSPHRASE: ${{ secrets.DOCS_ATTEST_KEY_PASSPHRASE }}
+          DOCS_ATTEST_WITH_UBL_CID: "true"
+        run: |
+          set -euo pipefail
+          bash scripts/docs_attest.sh sign \
+            --manifest "$ATTEST_DIR/manifest.json" \
+            --key "${{ steps.key.outputs.key_path }}" \
+            --pub "${{ steps.key.outputs.pub_path }}" \
+            --out "$ATTEST_DIR/attestation.json" \
+            --sig-out "$ATTEST_DIR/attestation.sig"
+
+      - name: Write unsigned attestation fallback
+        if: steps.key.outputs.has_key != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest_sha="$(sha256sum "$ATTEST_DIR/manifest.json" | awk '{print $1}')"
+          commit_sha="$(git rev-parse HEAD)"
+          generated_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          jq -n \
+            --arg generated_at "$generated_at" \
+            --arg commit "$commit_sha" \
+            --arg tag "$TAG_NAME" \
+            --arg manifest_path "$ATTEST_DIR/manifest.json" \
+            --arg manifest_sha "$manifest_sha" \
+            '{
+              "@type":"ubl/docs-attestation",
+              "@ver":"1.0",
+              "@world":"a/logline/t/oss",
+              "generated_at":$generated_at,
+              "git":{"commit":$commit,"tag":$tag},
+              "manifest":{"path":$manifest_path,"sha256":$manifest_sha,"cid":null},
+              "signature":{"status":"unsigned","reason":"DOCS_ATTEST_PRIVATE_KEY_PEM_B64 not configured"}
+            }' > "$ATTEST_DIR/attestation.json"
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: UBL-CORE ${{ env.TAG_NAME }}
+          generate_release_notes: true
+          prerelease: ${{ steps.flags.outputs.prerelease }}
+          make_latest: ${{ steps.flags.outputs.make_latest }}
+          fail_on_unmatched_files: false
+          files: |
+            ${{ env.ATTEST_DIR }}/manifest.json
+            ${{ env.ATTEST_DIR }}/attestation.json
+            ${{ env.ATTEST_DIR }}/*.sig
+            ${{ env.ATTEST_DIR }}/*.sig.b64
+            ${{ env.ATTEST_DIR }}/*.pub.pem
+          body: |
+            Release mode: `${{ steps.flags.outputs.mode }}`
+            Triggered via workflow_dispatch.
+
+            ${{ inputs.notes }}

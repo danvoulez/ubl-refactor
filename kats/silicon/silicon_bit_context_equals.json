@@ -1,0 +1,22 @@
+{
+  "@type": "ubl/silicon.bit",
+  "@ver": "1.0",
+  "@world": "a/lab/t/dev",
+  "_kat": {
+    "description": "Context-equals bit — the canonical 'is admin' semantic transistor.",
+    "eval_allow": {"body.role": "admin"},
+    "eval_deny": {"body.role": "member"},
+    "expected_parse": "ok",
+    "expected_tr_profile": "silicon_definition_v1"
+  },
+  "condition": {
+    "key": "body.role",
+    "op": "context_equals",
+    "value": "admin"
+  },
+  "id": "P_IsAdmin",
+  "name": "Is Admin Role",
+  "on_false": "deny",
+  "on_true": "allow",
+  "requires_context": ["body.role"]
+}

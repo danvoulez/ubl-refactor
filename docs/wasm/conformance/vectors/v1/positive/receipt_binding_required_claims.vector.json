@@ -1,0 +1,26 @@
+{
+  "id": "WASM-POS-003",
+  "version": "v1",
+  "kind": "positive",
+  "category": "receipt_binding",
+  "description": "Successful execution includes required WASM receipt binding claims.",
+  "profile": "deterministic_v1",
+  "input": {
+    "abi_version": "v1",
+    "module_ref": "fixtures/modules/noop_valid.wasm",
+    "payload_ref": "fixtures/payloads/minimal_valid.json",
+    "capabilities": ["compute"]
+  },
+  "expected": {
+    "decision": "allow",
+    "code": "OK",
+    "receipt_claims": [
+      "wasm.module.sha256",
+      "wasm.abi.version",
+      "wasm.profile",
+      "wasm.fuel.used",
+      "wasm.memory.max_bytes",
+      "wasm.verify.status"
+    ]
+  }
+}
