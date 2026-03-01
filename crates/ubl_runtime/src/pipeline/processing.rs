@@ -531,7 +531,7 @@ impl UblPipeline {
 
         // Append to audit ledger (best-effort — never blocks pipeline)
         {
-            let (app, tenant) = ubl_ai_nrf1::UblEnvelope::parse_world(world)
+            let (app, tenant) = ubl_nrf::UblEnvelope::parse_world(world)
                 .map(|(a, t)| (a.to_string(), t.to_string()))
                 .unwrap_or_else(|| ("unknown".to_string(), "unknown".to_string()));
             let entry = crate::ledger::LedgerEntry {

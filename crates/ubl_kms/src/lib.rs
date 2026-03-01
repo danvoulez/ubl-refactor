@@ -166,8 +166,7 @@ pub fn sign_canonical(
     value: &serde_json::Value,
     domain: &str,
 ) -> Result<String, KmsError> {
-    let nrf_bytes =
-        ubl_ai_nrf1::nrf::to_nrf1_bytes(value).map_err(|e| KmsError::Nrf(e.to_string()))?;
+    let nrf_bytes = ubl_nrf::nrf::to_nrf1_bytes(value).map_err(|e| KmsError::Nrf(e.to_string()))?;
     let msg = domain_message(domain, &nrf_bytes);
     let sig: Signature = sk.sign(&msg);
     Ok(format!("ed25519:{}", BASE64.encode(sig.to_bytes())))
@@ -192,8 +191,7 @@ pub fn verify_canonical(
     domain: &str,
     sig_str: &str,
 ) -> Result<bool, KmsError> {
-    let nrf_bytes =
-        ubl_ai_nrf1::nrf::to_nrf1_bytes(value).map_err(|e| KmsError::Nrf(e.to_string()))?;
+    let nrf_bytes = ubl_nrf::nrf::to_nrf1_bytes(value).map_err(|e| KmsError::Nrf(e.to_string()))?;
     let msg = domain_message(domain, &nrf_bytes);
     verify_raw(vk, &msg, sig_str)
 }

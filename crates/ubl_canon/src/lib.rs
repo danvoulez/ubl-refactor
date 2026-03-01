@@ -34,7 +34,7 @@ pub enum CanonError {
 
 /// Encode JSON value to canonical NRF bytes.
 pub fn to_nrf_bytes(value: &serde_json::Value) -> Result<Vec<u8>, CanonError> {
-    ubl_ai_nrf1::to_nrf1_bytes(value).map_err(|e| CanonError::Nrf(e.to_string()))
+    ubl_nrf::to_nrf1_bytes(value).map_err(|e| CanonError::Nrf(e.to_string()))
 }
 
 /// Compute canonical CID (`b3:<hex>` over NRF bytes).

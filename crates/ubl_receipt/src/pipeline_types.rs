@@ -10,7 +10,7 @@ pub enum Decision {
     Require,
 }
 
-/// Receipt types for the UBL MASTER pipeline
+/// Receipt types for the UBL CORE pipeline
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UblReceiptType {
     #[serde(rename = "ubl/wa")]

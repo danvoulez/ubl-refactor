@@ -27,7 +27,9 @@ pub(crate) async fn get_receipt(
         return (
             StatusCode::BAD_REQUEST,
             HeaderMap::new(),
-            Json(json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"})),
+            Json(
+                json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"}),
+            ),
         );
     }
 
@@ -76,7 +78,9 @@ pub(crate) async fn get_receipt(
         Ok(None) => (
             StatusCode::NOT_FOUND,
             HeaderMap::new(),
-            Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)})),
+            Json(
+                json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)}),
+            ),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -97,7 +101,9 @@ pub(crate) async fn get_receipt_public_url(
     if !cid.starts_with("b3:") {
         return (
             StatusCode::BAD_REQUEST,
-            Json(json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"})),
+            Json(
+                json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"}),
+            ),
         );
     }
 
@@ -143,7 +149,9 @@ pub(crate) async fn get_receipt_public_url(
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)})),
+            Json(
+                json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)}),
+            ),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -213,13 +221,17 @@ pub(crate) async fn verify_advisory(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Advisory {} not found", cid)})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Advisory {} not found", cid)}),
+                ),
             )
         }
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"@type": "ubl/error", "code": "INTERNAL_ERROR", "message": e.to_string()})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "INTERNAL_ERROR", "message": e.to_string()}),
+                ),
             )
         }
     };
@@ -227,7 +239,9 @@ pub(crate) async fn verify_advisory(
     if chip.chip_type != "ubl/advisory" {
         return (
             StatusCode::BAD_REQUEST,
-            Json(json!({"@type": "ubl/error", "code": "INVALID_TYPE", "message": "Chip is not an advisory"})),
+            Json(
+                json!({"@type": "ubl/error", "code": "INVALID_TYPE", "message": "Chip is not an advisory"}),
+            ),
         );
     }
 
@@ -236,21 +250,25 @@ pub(crate) async fn verify_advisory(
         Err(e) => {
             return (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                Json(json!({"@type": "ubl/error", "code": "INVALID_ADVISORY", "message": e.to_string()})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "INVALID_ADVISORY", "message": e.to_string()}),
+                ),
             )
         }
     };
 
-    let nrf_bytes = match ubl_ai_nrf1::to_nrf1_bytes(&chip.chip_data) {
+    let nrf_bytes = match ubl_nrf::to_nrf1_bytes(&chip.chip_data) {
         Ok(b) => b,
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"@type": "ubl/error", "code": "ENCODING_ERROR", "message": e.to_string()})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "ENCODING_ERROR", "message": e.to_string()}),
+                ),
             )
         }
     };
-    let computed_cid = match ubl_ai_nrf1::compute_cid(&nrf_bytes) {
+    let computed_cid = match ubl_nrf::compute_cid(&nrf_bytes) {
         Ok(c) => c,
         Err(e) => {
             return (
@@ -354,7 +372,9 @@ pub(crate) async fn get_receipt_trace(
         ),
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)})),
+            Json(
+                json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Receipt {} not found", cid)}),
+            ),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -536,7 +556,11 @@ pub(crate) async fn narrate_receipt_stream(
             yield Ok::<SseEvent, Infallible>(SseEvent::default().event("done").data(""));
         };
         return Sse::new(sse_stream)
-            .keep_alive(KeepAlive::new().interval(std::time::Duration::from_secs(15)).text(":"))
+            .keep_alive(
+                KeepAlive::new()
+                    .interval(std::time::Duration::from_secs(15))
+                    .text(":"),
+            )
             .into_response();
     }
 

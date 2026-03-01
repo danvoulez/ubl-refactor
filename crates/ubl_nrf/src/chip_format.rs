@@ -1,7 +1,7 @@
 //! Chip-as-Code format support
 //!
 //! Supports compilation from YAML .chip files to NRF-1 binary format
-//! as specified in the UBL MASTER BLUEPRINT.
+//! as specified in the UBL CORE BLUEPRINT.
 
 use crate::{to_nrf1_bytes, CompileError};
 use serde::{Deserialize, Serialize};

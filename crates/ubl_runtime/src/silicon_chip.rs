@@ -2212,7 +2212,7 @@ mod tests {
         assert!(bytecode.windows(1).any(|w| w[0] == 0x10), "EmitRc missing");
 
         // Disassemble and verify it's human-readable
-        let disasm = rb_vm::disassemble(&bytecode).unwrap();
+        let disasm = ubl_vm::disassemble(&bytecode).unwrap();
         assert!(disasm.contains("PushTimestamp"));
         assert!(disasm.contains("SubI64"));
         assert!(disasm.contains("JsonGetKey"));
@@ -2221,7 +2221,7 @@ mod tests {
 
     #[test]
     fn div_i64_opcode_in_disasm() {
-        use rb_vm::{disassemble, opcode::Opcode};
+        use ubl_vm::{disassemble, opcode::Opcode};
         // Encode a DivI64 instruction (no payload)
         let mut bc = Vec::new();
         bc.push(Opcode::DivI64 as u8);
@@ -2236,7 +2236,7 @@ mod tests {
 
     #[test]
     fn push_timestamp_opcode_in_disasm() {
-        use rb_vm::{disassemble, opcode::Opcode};
+        use ubl_vm::{disassemble, opcode::Opcode};
         let mut bc = Vec::new();
         bc.push(Opcode::PushTimestamp as u8);
         bc.extend_from_slice(&0u16.to_be_bytes());
@@ -2250,7 +2250,7 @@ mod tests {
 
     #[test]
     fn cmp_timestamp_ge_in_disasm() {
-        use rb_vm::{disassemble, opcode::Opcode};
+        use ubl_vm::{disassemble, opcode::Opcode};
         let mut bc = Vec::new();
         bc.push(Opcode::CmpTimestamp as u8);
         bc.extend_from_slice(&1u16.to_be_bytes()); // payload len = 1

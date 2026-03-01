@@ -1,0 +1,21 @@
+services:
+  ubl-gate:
+    build:
+      context: ../..
+      dockerfile: ops/gate/Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      UBL_GATE_BIND: "0.0.0.0:4000"
+      UBL_DATA_DIR: "/data"
+    volumes:
+      - gate_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  gate_data:

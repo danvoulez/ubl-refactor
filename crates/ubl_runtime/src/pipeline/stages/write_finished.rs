@@ -11,9 +11,9 @@ impl UblPipeline {
         pipeline_duration_ms: i64,
     ) -> Result<PipelineReceipt, PipelineError> {
         // Compute the final chip CID
-        let chip_nrf1 = ubl_ai_nrf1::to_nrf1_bytes(request.body())
+        let chip_nrf1 = ubl_nrf::to_nrf1_bytes(request.body())
             .map_err(|e| PipelineError::Internal(format!("Chip CID: {}", e)))?;
-        let chip_cid = ubl_ai_nrf1::compute_cid(&chip_nrf1)
+        let chip_cid = ubl_nrf::compute_cid(&chip_nrf1)
             .map_err(|e| PipelineError::Internal(format!("Chip CID: {}", e)))?;
 
         let mut artifacts = HashMap::new();
@@ -39,9 +39,9 @@ impl UblPipeline {
         let body_json = serde_json::to_value(&wf_body)
             .map_err(|e| PipelineError::Internal(format!("WF serialization: {}", e)))?;
 
-        let nrf1_bytes = ubl_ai_nrf1::to_nrf1_bytes(&body_json)
+        let nrf1_bytes = ubl_nrf::to_nrf1_bytes(&body_json)
             .map_err(|e| PipelineError::Internal(format!("WF CID: {}", e)))?;
-        let cid = ubl_ai_nrf1::compute_cid(&nrf1_bytes)
+        let cid = ubl_nrf::compute_cid(&nrf1_bytes)
             .map_err(|e| PipelineError::Internal(format!("WF CID: {}", e)))?;
 
         Ok(PipelineReceipt {
@@ -71,9 +71,9 @@ impl UblPipeline {
         let body_json = serde_json::to_value(&wf_body)
             .map_err(|e| PipelineError::Internal(format!("WF DENY serialization: {}", e)))?;
 
-        let nrf1_bytes = ubl_ai_nrf1::to_nrf1_bytes(&body_json)
+        let nrf1_bytes = ubl_nrf::to_nrf1_bytes(&body_json)
             .map_err(|e| PipelineError::Internal(format!("WF DENY CID: {}", e)))?;
-        let cid = ubl_ai_nrf1::compute_cid(&nrf1_bytes)
+        let cid = ubl_nrf::compute_cid(&nrf1_bytes)
             .map_err(|e| PipelineError::Internal(format!("WF DENY CID: {}", e)))?;
 
         Ok(PipelineReceipt {

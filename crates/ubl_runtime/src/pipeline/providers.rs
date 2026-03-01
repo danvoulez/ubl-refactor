@@ -1,9 +1,9 @@
-use rb_vm::canon::CanonProvider;
-use rb_vm::types::Cid as VmCid;
-use rb_vm::{CasProvider, SignProvider};
 use std::collections::HashMap;
 use std::sync::Arc;
 use ubl_kms::Ed25519SigningKey as SigningKey;
+use ubl_vm::canon::CanonProvider;
+use ubl_vm::types::Cid as VmCid;
+use ubl_vm::{CasProvider, SignProvider};
 
 pub(super) struct PipelineCas {
     store: HashMap<String, Vec<u8>>,
@@ -59,6 +59,6 @@ pub(super) struct PipelineCanon;
 
 impl CanonProvider for PipelineCanon {
     fn canon(&self, v: serde_json::Value) -> serde_json::Value {
-        rb_vm::RhoCanon.canon(v)
+        ubl_vm::RhoCanon.canon(v)
     }
 }

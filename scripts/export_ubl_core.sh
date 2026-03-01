@@ -132,7 +132,7 @@ if [[ $DRY_RUN -eq 0 && $NORMALIZE_NAME -eq 1 ]]; then
     perl -0777 -i -pe 's/name = "ubl_master"/name = "ubl_core"/g' "$DST/Cargo.toml"
   fi
   if [[ -f "$DST/README.md" ]]; then
-    perl -0777 -i -pe 's/\bUBL MASTER\b/UBL CORE/g' "$DST/README.md"
+    perl -0777 -i -pe 's/\bUBL CORE\b/UBL CORE/g' "$DST/README.md"
   fi
   if [[ -f "$DST/services/ubl_gate/src/main.rs" ]]; then
     perl -0777 -i -pe 's/\bubl-master\b/ubl-core/g' "$DST/services/ubl_gate/src/main.rs"

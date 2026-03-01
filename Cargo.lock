@@ -2311,16 +2311,9 @@ dependencies = [
 name = "rb_vm"
 version = "0.1.0"
 dependencies = [
- "base64",
- "blake3",
- "ed25519-dalek",
- "hex",
  "proptest",
- "serde",
  "serde_json",
- "thiserror 1.0.69",
- "ubl_unc1",
- "unicode-normalization",
+ "ubl_vm",
 ]
 
 [[package]]
@@ -3241,19 +3234,11 @@ checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
 name = "ubl_ai_nrf1"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "blake3",
- "chrono",
- "hex",
  "hex-literal",
- "leb128",
  "proptest",
  "serde",
  "serde_json",
- "serde_yaml",
- "thiserror 1.0.69",
- "ubl_unc1",
- "unicode-normalization",
+ "ubl_nrf",
 ]
 
 [[package]]
@@ -3267,7 +3252,7 @@ dependencies = [
  "proptest",
  "serde_json",
  "thiserror 1.0.69",
- "ubl_ai_nrf1",
+ "ubl_nrf",
 ]
 
 [[package]]
@@ -3283,7 +3268,7 @@ dependencies = [
  "sled",
  "thiserror 1.0.69",
  "tokio",
- "ubl_ai_nrf1",
+ "ubl_nrf",
  "ubl_receipt",
  "ubl_types",
 ]
@@ -3297,18 +3282,18 @@ dependencies = [
  "chrono",
  "clap",
  "hex",
- "rb_vm",
  "reqwest",
  "serde",
  "serde_json",
  "serde_yaml",
  "tokio",
- "ubl_ai_nrf1",
  "ubl_chipstore",
  "ubl_kms",
+ "ubl_nrf",
  "ubl_receipt",
  "ubl_runtime",
  "ubl_types",
+ "ubl_vm",
 ]
 
 [[package]]
@@ -3360,7 +3345,6 @@ dependencies = [
  "hex",
  "once_cell",
  "prometheus",
- "rb_vm",
  "reqwest",
  "serde",
  "serde_json",
@@ -3368,11 +3352,13 @@ dependencies = [
  "tower",
  "tracing",
  "tracing-subscriber",
- "ubl_ai_nrf1",
  "ubl_chipstore",
+ "ubl_config",
  "ubl_eventstore",
+ "ubl_nrf",
  "ubl_receipt",
  "ubl_runtime",
+ "ubl_vm",
 ]
 
 [[package]]
@@ -3387,7 +3373,7 @@ dependencies = [
  "rand 0.8.5",
  "serde_json",
  "thiserror 1.0.69",
- "ubl_ai_nrf1",
+ "ubl_nrf",
 ]
 
 [[package]]
@@ -3401,6 +3387,25 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
+]
+
+[[package]]
+name = "ubl_nrf"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "blake3",
+ "chrono",
+ "hex",
+ "hex-literal",
+ "leb128",
+ "proptest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 1.0.69",
+ "ubl_unc1",
+ "unicode-normalization",
 ]
 
 [[package]]
@@ -3439,7 +3444,6 @@ dependencies = [
  "hex",
  "proptest",
  "rand 0.8.5",
- "rb_vm",
  "ring",
  "rusqlite",
  "serde",
@@ -3448,13 +3452,14 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
- "ubl_ai_nrf1",
  "ubl_canon",
  "ubl_chipstore",
  "ubl_kms",
+ "ubl_nrf",
  "ubl_receipt",
  "ubl_types",
  "ubl_unc1",
+ "ubl_vm",
  "wasmtime",
  "wat",
 ]
@@ -3478,6 +3483,22 @@ dependencies = [
  "proptest",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "ubl_vm"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "blake3",
+ "ed25519-dalek",
+ "hex",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "ubl_unc1",
+ "unicode-normalization",
 ]
 
 [[package]]

@@ -7,12 +7,12 @@ use ubl_chipstore::ChipStore;
 use ubl_eventstore::EventStore;
 use ubl_runtime::advisory::AdvisoryEngine;
 use ubl_runtime::durable_store::DurableStore;
+use ubl_runtime::error_response::ErrorCode;
 use ubl_runtime::manifest::GateManifest;
 use ubl_runtime::rate_limit::CanonRateLimiter;
 use ubl_runtime::UblPipeline;
-use ubl_runtime::error_response::ErrorCode;
 
-use crate::utils::{env_bool, csv_env, extract_api_key};
+use crate::utils::{csv_env, env_bool, extract_api_key};
 
 #[derive(Clone)]
 pub(crate) struct AppState {

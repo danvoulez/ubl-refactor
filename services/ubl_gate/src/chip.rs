@@ -12,9 +12,9 @@ use serde_json::{json, Value};
 use crate::metrics;
 use crate::state::AppState;
 use crate::utils::{
-    actor_hint_from_headers, build_public_receipt_link, deny_write_with_receipt,
-    knock_reason_code, parse_bearer_token, resolve_session_bearer, scope_allows_any, too_many_requests_error, verify_receipt_auth_chain,
-    world_scope_allows,
+    actor_hint_from_headers, build_public_receipt_link, deny_write_with_receipt, knock_reason_code,
+    parse_bearer_token, resolve_session_bearer, scope_allows_any, too_many_requests_error,
+    verify_receipt_auth_chain, world_scope_allows,
 };
 use ubl_runtime::error_response::{ErrorCode, UblError};
 use ubl_runtime::rate_limit::RateLimitResult;
@@ -350,7 +350,9 @@ pub(crate) async fn verify_chip(
     if !cid.starts_with("b3:") {
         return (
             StatusCode::BAD_REQUEST,
-            Json(json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"})),
+            Json(
+                json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"}),
+            ),
         );
     }
 
@@ -359,19 +361,23 @@ pub(crate) async fn verify_chip(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Chip {} not found", cid)})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Chip {} not found", cid)}),
+                ),
             )
         }
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({"@type": "ubl/error", "code": "INTERNAL_ERROR", "message": e.to_string()})),
+                Json(
+                    json!({"@type": "ubl/error", "code": "INTERNAL_ERROR", "message": e.to_string()}),
+                ),
             )
         }
     };
 
-    let (computed_cid, encoding_ok) = match ubl_ai_nrf1::to_nrf1_bytes(&chip.chip_data) {
-        Ok(nrf_bytes) => match ubl_ai_nrf1::compute_cid(&nrf_bytes) {
+    let (computed_cid, encoding_ok) = match ubl_nrf::to_nrf1_bytes(&chip.chip_data) {
+        Ok(nrf_bytes) => match ubl_nrf::compute_cid(&nrf_bytes) {
             Ok(c) => (c, true),
             Err(_) => (String::new(), false),
         },
@@ -448,7 +454,9 @@ pub(crate) async fn get_chip(
         return (
             StatusCode::BAD_REQUEST,
             HeaderMap::new(),
-            Json(json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"})),
+            Json(
+                json!({"@type": "ubl/error", "code": "INVALID_CID", "message": "CID must start with b3:"}),
+            ),
         );
     }
 
@@ -489,7 +497,9 @@ pub(crate) async fn get_chip(
         Ok(None) => (
             StatusCode::NOT_FOUND,
             HeaderMap::new(),
-            Json(json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Chip {} not found", cid)})),
+            Json(
+                json!({"@type": "ubl/error", "code": "NOT_FOUND", "message": format!("Chip {} not found", cid)}),
+            ),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,

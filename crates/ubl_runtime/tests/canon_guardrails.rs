@@ -11,8 +11,8 @@ fn cid_equivalence_nrf_across_components() {
     });
 
     let via_canon = ubl_canon::cid_of(&value).expect("canon cid");
-    let nrf = ubl_ai_nrf1::to_nrf1_bytes(&value).expect("nrf bytes");
-    let via_nrf = ubl_ai_nrf1::compute_cid(&nrf).expect("nrf cid");
+    let nrf = ubl_nrf::to_nrf1_bytes(&value).expect("nrf bytes");
+    let via_nrf = ubl_nrf::compute_cid(&nrf).expect("nrf cid");
 
     assert_eq!(via_canon, via_nrf);
 }

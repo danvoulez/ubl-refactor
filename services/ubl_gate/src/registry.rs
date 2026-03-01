@@ -8,15 +8,15 @@ use axum::{
 };
 use serde_json::{json, Value};
 
-use axum::http::HeaderMap;
 use crate::chip::submit_chip_bytes;
 use crate::console::{render_html, split_rows};
 use crate::state::AppState;
 use crate::templates::{
-    RegistryKatRow, RegistryKatResultTemplate, RegistryKatTestForm, RegistryRow,
+    RegistryKatResultTemplate, RegistryKatRow, RegistryKatTestForm, RegistryRow,
     RegistryTableTemplate, RegistryTemplate, RegistryTypeTemplate, RegistryTypeVersionRow,
     RegistryTypeView, RegistryVersionView, RegistryView,
 };
+use axum::http::HeaderMap;
 
 pub(crate) async fn registry_page(
     Query(query): Query<std::collections::BTreeMap<String, String>>,
@@ -285,7 +285,8 @@ pub(crate) async fn registry_kat_test(
         }
     };
 
-    let (status, _headers, payload): (StatusCode, HeaderMap, Value) = submit_chip_bytes(&state, None, true, &body).await;
+    let (status, _headers, payload): (StatusCode, HeaderMap, Value) =
+        submit_chip_bytes(&state, None, true, &body).await;
     let actual_decision = payload
         .get("decision")
         .and_then(|v| v.as_str())

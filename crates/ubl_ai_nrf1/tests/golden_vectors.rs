@@ -15,7 +15,7 @@
 //! PF-01 contract: same canonical input → same bytes → same CID, forever.
 
 use std::path::PathBuf;
-use ubl_ai_nrf1::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
+use ubl_nrf::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
 
 fn golden_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

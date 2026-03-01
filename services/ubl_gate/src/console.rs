@@ -15,7 +15,7 @@ use crate::advisor::build_advisor_snapshot;
 use crate::events::Mock24hQuery;
 use crate::state::AppState;
 use crate::templates::{
-    ConsoleMock24hTemplate, ConsoleEventRow, ConsoleEventsTemplate, ConsoleKpisTemplate,
+    ConsoleEventRow, ConsoleEventsTemplate, ConsoleKpisTemplate, ConsoleMock24hTemplate,
     ConsoleTemplate, MockHourRow, StageP95Row,
 };
 
@@ -292,9 +292,7 @@ pub(crate) async fn console_mock24h_partial(
     })
 }
 
-pub(crate) async fn mock24h_api(
-    Query(query): Query<Mock24hQuery>,
-) -> (StatusCode, Json<Value>) {
+pub(crate) async fn mock24h_api(Query(query): Query<Mock24hQuery>) -> (StatusCode, Json<Value>) {
     let world = query.world.unwrap_or_else(|| "*".to_string());
     let profile = normalize_mock_profile(query.profile.as_deref().unwrap_or("normal"));
     let rows = build_mock_24h_rows(&profile, &world);

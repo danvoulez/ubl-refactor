@@ -324,22 +324,22 @@ struct McpRbCas {
     store: HashMap<String, Vec<u8>>,
 }
 
-impl rb_vm::CasProvider for McpRbCas {
-    fn put(&mut self, bytes: &[u8]) -> rb_vm::Cid {
+impl ubl_vm::CasProvider for McpRbCas {
+    fn put(&mut self, bytes: &[u8]) -> ubl_vm::Cid {
         let hash = blake3::hash(bytes);
         let cid = format!("b3:{}", hex::encode(hash.as_bytes()));
         self.store.insert(cid.clone(), bytes.to_vec());
-        rb_vm::Cid(cid)
+        ubl_vm::Cid(cid)
     }
 
-    fn get(&self, cid: &rb_vm::Cid) -> Option<Vec<u8>> {
+    fn get(&self, cid: &ubl_vm::Cid) -> Option<Vec<u8>> {
         self.store.get(&cid.0).cloned()
     }
 }
 
 struct McpRbSigner;
 
-impl rb_vm::SignProvider for McpRbSigner {
+impl ubl_vm::SignProvider for McpRbSigner {
     fn sign_jws(&self, _payload_nrf_bytes: &[u8]) -> Vec<u8> {
         vec![0_u8; 64]
     }
@@ -351,9 +351,9 @@ impl rb_vm::SignProvider for McpRbSigner {
 
 struct McpRbCanon;
 
-impl rb_vm::canon::CanonProvider for McpRbCanon {
+impl ubl_vm::canon::CanonProvider for McpRbCanon {
     fn canon(&self, v: serde_json::Value) -> serde_json::Value {
-        rb_vm::RhoCanon.canon(v)
+        ubl_vm::RhoCanon.canon(v)
     }
 }
 
@@ -495,8 +495,8 @@ pub(crate) async fn dispatch_tool_call(
             let cid = arguments.get("cid").and_then(|v| v.as_str()).unwrap_or("");
             match state.chip_store.get_chip(cid).await {
                 Ok(Some(chip)) => {
-                    let verified = match ubl_ai_nrf1::to_nrf1_bytes(&chip.chip_data) {
-                        Ok(nrf) => ubl_ai_nrf1::compute_cid(&nrf)
+                    let verified = match ubl_nrf::to_nrf1_bytes(&chip.chip_data) {
+                        Ok(nrf) => ubl_nrf::compute_cid(&nrf)
                             .map(|c| c == cid)
                             .unwrap_or(false),
                         Err(_) => false,
@@ -533,7 +533,12 @@ pub(crate) async fn dispatch_tool_call(
             if cid.is_empty() {
                 return (
                     StatusCode::OK,
-                    Json(mcp_error_value(id, -32602, "missing required argument: cid", None)),
+                    Json(mcp_error_value(
+                        id,
+                        -32602,
+                        "missing required argument: cid",
+                        None,
+                    )),
                 );
             }
 
@@ -592,7 +597,12 @@ pub(crate) async fn dispatch_tool_call(
                 ),
                 Ok(None) => (
                     StatusCode::OK,
-                    Json(mcp_error_value(id, -32004, format!("Receipt {} not found", cid), None)),
+                    Json(mcp_error_value(
+                        id,
+                        -32004,
+                        format!("Receipt {} not found", cid),
+                        None,
+                    )),
                 ),
                 Err(e) => (
                     StatusCode::OK,
@@ -608,9 +618,7 @@ pub(crate) async fn dispatch_tool_call(
                 .or_else(|| arguments.get("chip"))
                 .cloned()
                 .unwrap_or(json!({}));
-            match ubl_ai_nrf1::to_nrf1_bytes(&payload)
-                .and_then(|bytes| ubl_ai_nrf1::compute_cid(&bytes))
-            {
+            match ubl_nrf::to_nrf1_bytes(&payload).and_then(|bytes| ubl_nrf::compute_cid(&bytes)) {
                 Ok(cid) => (
                     StatusCode::OK,
                     Json(json!({
@@ -640,7 +648,12 @@ pub(crate) async fn dispatch_tool_call(
             if bytecode_hex.is_empty() {
                 return (
                     StatusCode::OK,
-                    Json(mcp_error_value(id, -32602, "missing required argument: bytecode_hex", None)),
+                    Json(mcp_error_value(
+                        id,
+                        -32602,
+                        "missing required argument: bytecode_hex",
+                        None,
+                    )),
                 );
             }
 
@@ -654,23 +667,33 @@ pub(crate) async fn dispatch_tool_call(
                 Err(e) => {
                     return (
                         StatusCode::OK,
-                        Json(mcp_error_value(id, -32602, format!("invalid bytecode_hex: {}", e), None)),
+                        Json(mcp_error_value(
+                            id,
+                            -32602,
+                            format!("invalid bytecode_hex: {}", e),
+                            None,
+                        )),
                     );
                 }
             };
-            let instructions = match rb_vm::tlv::decode_stream(&bytecode) {
+            let instructions = match ubl_vm::tlv::decode_stream(&bytecode) {
                 Ok(v) => v,
                 Err(e) => {
                     return (
                         StatusCode::OK,
-                        Json(mcp_error_value(id, -32602, format!("invalid bytecode stream: {}", e), None)),
+                        Json(mcp_error_value(
+                            id,
+                            -32602,
+                            format!("invalid bytecode stream: {}", e),
+                            None,
+                        )),
                     );
                 }
             };
 
             let signer = McpRbSigner;
-            let mut vm = rb_vm::Vm::new(
-                rb_vm::VmConfig {
+            let mut vm = ubl_vm::Vm::new(
+                ubl_vm::VmConfig {
                     fuel_limit,
                     ghost: false,
                     trace: true,
@@ -698,7 +721,12 @@ pub(crate) async fn dispatch_tool_call(
                 ),
                 Err(e) => (
                     StatusCode::OK,
-                    Json(mcp_error_value(id, -32602, format!("rb execute failed: {}", e), None)),
+                    Json(mcp_error_value(
+                        id,
+                        -32602,
+                        format!("rb execute failed: {}", e),
+                        None,
+                    )),
                 ),
             }
         }

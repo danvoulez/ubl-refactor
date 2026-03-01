@@ -33,9 +33,9 @@ impl UblPipeline {
             .map_err(|e| PipelineError::Internal(format!("WA serialization: {}", e)))?;
 
         // Compute CID
-        let nrf1_bytes = ubl_ai_nrf1::to_nrf1_bytes(&body_json)
+        let nrf1_bytes = ubl_nrf::to_nrf1_bytes(&body_json)
             .map_err(|e| PipelineError::Internal(format!("WA CID: {}", e)))?;
-        let cid = ubl_ai_nrf1::compute_cid(&nrf1_bytes)
+        let cid = ubl_nrf::compute_cid(&nrf1_bytes)
             .map_err(|e| PipelineError::Internal(format!("WA CID: {}", e)))?;
 
         Ok(PipelineReceipt {

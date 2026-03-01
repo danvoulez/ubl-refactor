@@ -268,10 +268,10 @@ impl WasmExecutor for WasmtimeExecutor {
             .read(&mut store, 0, &mut out)
             .map_err(|e| WasmError::Runtime(format!("memory read: {}", e)))?;
 
-        ubl_ai_nrf1::nrf::decode_from_slice(&out)
+        ubl_nrf::nrf::decode_from_slice(&out)
             .map_err(|e| WasmError::InvalidOutput(format!("not valid NRF-1: {}", e)))?;
         let output_cid =
-            ubl_ai_nrf1::compute_cid(&out).map_err(|e| WasmError::InvalidOutput(e.to_string()))?;
+            ubl_nrf::compute_cid(&out).map_err(|e| WasmError::InvalidOutput(e.to_string()))?;
 
         let fuel_remaining = store.get_fuel().unwrap_or(0);
         let fuel_consumed = sandbox.fuel_limit.saturating_sub(fuel_remaining);
@@ -606,7 +606,7 @@ mod tests {
             "@type": "ubl/payment",
             "amount": {"@num":"dec/1","m":"1250","s":2}
         });
-        let input_bytes = ubl_ai_nrf1::to_nrf1_bytes(&input_json).unwrap();
+        let input_bytes = ubl_nrf::to_nrf1_bytes(&input_json).unwrap();
         let input = WasmInput {
             nrf1_bytes: input_bytes.clone(),
             chip_cid: "b3:input".into(),
@@ -622,10 +622,7 @@ mod tests {
         let out = exec.execute(&module, &input, &sandbox).unwrap();
 
         assert_eq!(out.nrf1_bytes, input_bytes);
-        assert_eq!(
-            out.output_cid,
-            ubl_ai_nrf1::compute_cid(&input_bytes).unwrap()
-        );
+        assert_eq!(out.output_cid, ubl_nrf::compute_cid(&input_bytes).unwrap());
         assert!(out.fuel_consumed > 0);
     }
 
@@ -644,7 +641,7 @@ mod tests {
         )
         .unwrap();
         let input = WasmInput {
-            nrf1_bytes: ubl_ai_nrf1::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
+            nrf1_bytes: ubl_nrf::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
             chip_cid: "b3:input".into(),
             frozen_timestamp: "2026-02-17T00:00:00Z".into(),
             fuel_limit: 10_000,
@@ -670,7 +667,7 @@ mod tests {
         )
         .unwrap();
         let input = WasmInput {
-            nrf1_bytes: ubl_ai_nrf1::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
+            nrf1_bytes: ubl_nrf::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
             chip_cid: "b3:input".into(),
             frozen_timestamp: "2026-02-17T00:00:00Z".into(),
             fuel_limit: 50,
@@ -697,7 +694,7 @@ mod tests {
         )
         .unwrap();
         let input = WasmInput {
-            nrf1_bytes: ubl_ai_nrf1::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
+            nrf1_bytes: ubl_nrf::to_nrf1_bytes(&json!({"ok":true})).unwrap(),
             chip_cid: "b3:input".into(),
             frozen_timestamp: "2026-02-17T00:00:00Z".into(),
             fuel_limit: 10_000,
