@@ -148,7 +148,7 @@ pub fn create_genesis_chip_body() -> serde_json::Value {
 
 /// Genesis chip CID - this is computed deterministically
 pub fn genesis_chip_cid() -> String {
-    use ubl_ai_nrf1::{compute_cid, to_nrf1_bytes};
+    use ubl_nrf::{compute_cid, to_nrf1_bytes};
 
     let genesis_body = create_genesis_chip_body();
     let nrf1_bytes = to_nrf1_bytes(&genesis_body).expect("Genesis chip must compile");

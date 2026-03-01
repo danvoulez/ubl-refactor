@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-// Re-export pipeline types for UBL MASTER
+// Re-export pipeline types for UBL CORE
 pub use pipeline_types::{
     AdvisoryBody, ChipIntent, Decision, KnockBody, OperationResult, PolicyTraceEntry, RbResult,
     UblReceiptType, WaReceiptBody, WfReceiptBody,

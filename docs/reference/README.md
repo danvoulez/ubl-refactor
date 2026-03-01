@@ -16,12 +16,15 @@ Reference contracts are now source-of-truth artifacts exported or defined by Rus
 
 ## Configuration
 
-- Source of truth: environment-variable reads in runtime/gate crates:
-  - `services/ubl_gate/src/main.rs`
-  - `crates/ubl_runtime/src/pipeline/mod.rs`
-  - `crates/ubl_runtime/src/rich_url.rs`
-  - `crates/ubl_runtime/src/durable_store.rs`
-  - `crates/ubl_runtime/src/transition_registry.rs`
+- Source of truth: `crates/ubl_config/src/lib.rs` (`GateConfig`, `StorageConfig`, `ObservabilityConfig`).
+- Gate runtime consumption: `services/ubl_gate/src/main.rs` + `services/ubl_gate/src/lib.rs`.
+- Key env/defaults:
+  - `UBL_GATE_BIND` (default `0.0.0.0:4000`)
+  - `UBL_DATA_DIR` (default `./data`)
+  - `UBL_STORE_BACKEND`, `UBL_STORE_DSN`, `UBL_IDEMPOTENCY_DSN`, `UBL_OUTBOX_DSN`
+  - `UBL_OUTBOX_WORKERS`, `UBL_OUTBOX_ENDPOINT`
+  - `UBL_EVENTSTORE_ENABLED`, `UBL_EVENTSTORE_PATH`
+  - `RUST_LOG`
 
 ## Numerics (UNC-1)
 

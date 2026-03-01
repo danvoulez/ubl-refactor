@@ -988,8 +988,8 @@ async fn chipstore_persists_after_allow() {
         "@world": "a/app/t/ten",
         "title": "Test Document"
     });
-    let nrf = ubl_ai_nrf1::to_nrf1_bytes(&chip_body).unwrap();
-    let expected_cid = ubl_ai_nrf1::compute_cid(&nrf).unwrap();
+    let nrf = ubl_nrf::to_nrf1_bytes(&chip_body).unwrap();
+    let expected_cid = ubl_nrf::compute_cid(&nrf).unwrap();
 
     let stored = chip_store.get_chip(&expected_cid).await.unwrap();
     assert!(stored.is_some(), "chip must be persisted after allow");
@@ -1539,8 +1539,8 @@ fn test_cap(action: &str, audience: &str) -> serde_json::Value {
 
 /// Helper: compute CID for a chip body.
 fn chip_cid(body: &serde_json::Value) -> String {
-    let nrf = ubl_ai_nrf1::to_nrf1_bytes(body).unwrap();
-    ubl_ai_nrf1::compute_cid(&nrf).unwrap()
+    let nrf = ubl_nrf::to_nrf1_bytes(body).unwrap();
+    ubl_nrf::compute_cid(&nrf).unwrap()
 }
 
 /// Helper: submit a chip and assert Allow.

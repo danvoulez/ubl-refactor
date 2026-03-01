@@ -4,7 +4,10 @@ use async_stream::stream;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::{sse::{Event as SseEvent, KeepAlive, Sse}, IntoResponse, Response},
+    response::{
+        sse::{Event as SseEvent, KeepAlive, Sse},
+        IntoResponse, Response,
+    },
     Json,
 };
 use serde::Deserialize;

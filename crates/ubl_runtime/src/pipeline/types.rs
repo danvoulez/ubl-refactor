@@ -136,7 +136,7 @@ impl<'a> ParsedChipRequest<'a> {
             .get("@world")
             .and_then(|v| v.as_str())
             .ok_or_else(|| PipelineError::InvalidChip("missing @world".to_string()))?;
-        ubl_ai_nrf1::UblEnvelope::validate_world(world)
+        ubl_nrf::UblEnvelope::validate_world(world)
             .map_err(|e| PipelineError::InvalidChip(format!("@world: {}", e)))?;
 
         let chip_id = body

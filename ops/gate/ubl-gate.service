@@ -1,0 +1,14 @@
+[Unit]
+Description=UBL CORE Gate Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ubl-core
+EnvironmentFile=/etc/ubl-gate/ubl-gate.env
+ExecStart=/usr/local/bin/ubl_gate
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

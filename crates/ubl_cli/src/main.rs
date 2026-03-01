@@ -3,7 +3,7 @@
 use clap::{Parser, Subcommand};
 use serde_json::{json, Value};
 use std::sync::Arc;
-use ubl_ai_nrf1::{compute_cid, to_nrf1_bytes, ChipFile};
+use ubl_nrf::{compute_cid, to_nrf1_bytes, ChipFile};
 
 #[derive(Parser)]
 #[command(name = "ublx")]
@@ -789,7 +789,7 @@ fn cmd_disasm(input: &str, is_hex: bool) -> Result<(), Box<dyn std::error::Error
     };
 
     println!("=== RB-VM Disassembly ({} bytes) ===\n", bytecode.len());
-    match rb_vm::disassemble(&bytecode) {
+    match ubl_vm::disassemble(&bytecode) {
         Ok(listing) => print!("{}", listing),
         Err(e) => eprintln!("Disassembly error: {}", e),
     }
@@ -876,7 +876,7 @@ async fn cmd_silicon_compile(
             println!("{}", bc_hex);
             println!();
             println!("=== Disassembly ===");
-            match rb_vm::disassemble(&bytecode) {
+            match ubl_vm::disassemble(&bytecode) {
                 Ok(listing) => print!("{}", listing),
                 Err(e) => eprintln!("Disassembly error: {}", e),
             }
@@ -1019,8 +1019,8 @@ async fn cmd_silicon_compile(
         .await?;
 
     // ── chip body CID = BLAKE3 content address of the raw body ───
-    let chip_nrf = ubl_ai_nrf1::to_nrf1_bytes(&chip_body)?;
-    let chip_content_cid = ubl_ai_nrf1::compute_cid(&chip_nrf)?;
+    let chip_nrf = ubl_nrf::to_nrf1_bytes(&chip_body)?;
+    let chip_content_cid = ubl_nrf::compute_cid(&chip_nrf)?;
 
     // ── 4. Resolve + compile ─────────────────────────────────────
     let chip = match parse_silicon(TYPE_SILICON_CHIP, &chip_data)? {
@@ -1053,7 +1053,7 @@ async fn cmd_silicon_compile(
         println!("{}", bc_hex);
         println!();
         println!("=== Disassembly ===");
-        match rb_vm::disassemble(&bytecode) {
+        match ubl_vm::disassemble(&bytecode) {
             Ok(listing) => print!("{}", listing),
             Err(e) => eprintln!("Disassembly error: {}", e),
         }
@@ -1089,7 +1089,7 @@ fn cmd_silicon_disasm(input: &str, is_file: bool) -> Result<(), Box<dyn std::err
         bytecode.len(),
         count_tlv_instrs(&bytecode),
     );
-    match rb_vm::disassemble(&bytecode) {
+    match ubl_vm::disassemble(&bytecode) {
         Ok(listing) => print!("{}", listing),
         Err(e) => eprintln!("Disassembly error: {}", e),
     }

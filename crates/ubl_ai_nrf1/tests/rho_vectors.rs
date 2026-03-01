@@ -5,7 +5,7 @@
 //! Vectors live in `kats/rho_vectors/*.json` at repo root.
 
 use std::path::PathBuf;
-use ubl_ai_nrf1::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
+use ubl_nrf::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
 
 fn vectors_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -66,8 +66,8 @@ fn rho_01_scalars_valid_subset() {
     let nrf = json_to_nrf(&v).expect("valid scalars must be accepted");
     let bytes = encode_to_vec(&nrf).unwrap();
     // null stripped from map → only t, f, i, neg remain
-    let decoded = ubl_ai_nrf1::nrf::decode_from_slice(&bytes).unwrap();
-    if let ubl_ai_nrf1::nrf::NrfValue::Map(m) = &decoded {
+    let decoded = ubl_nrf::nrf::decode_from_slice(&bytes).unwrap();
+    if let ubl_nrf::nrf::NrfValue::Map(m) = &decoded {
         assert_eq!(m.len(), 4, "null value 'n' must be stripped");
         assert!(!m.contains_key("n"));
     } else {
@@ -129,7 +129,7 @@ fn rho_05_06_key_order_produces_same_cid() {
 fn rho_05_keys_sorted_in_output() {
     let v = load("05_key_order_a.json");
     let nrf = json_to_nrf(&v).unwrap();
-    if let ubl_ai_nrf1::nrf::NrfValue::Map(m) = &nrf {
+    if let ubl_nrf::nrf::NrfValue::Map(m) = &nrf {
         let keys: Vec<&String> = m.keys().collect();
         assert_eq!(keys, vec!["a", "b", "c"], "keys must be sorted ascending");
     } else {
@@ -145,7 +145,7 @@ fn rho_07_arrays_nested() {
     let nrf = json_to_nrf(&v).expect("arrays with nested objects must be accepted");
     let bytes = encode_to_vec(&nrf).unwrap();
     // Roundtrip
-    let decoded = ubl_ai_nrf1::nrf::decode_from_slice(&bytes).unwrap();
+    let decoded = ubl_nrf::nrf::decode_from_slice(&bytes).unwrap();
     assert_eq!(nrf, decoded, "nested array must roundtrip exactly");
 }
 
@@ -156,7 +156,7 @@ fn rho_08_deep_nesting() {
     let v = load("08_nested.json");
     let nrf = json_to_nrf(&v).expect("deep nesting must be accepted");
     let bytes = encode_to_vec(&nrf).unwrap();
-    let decoded = ubl_ai_nrf1::nrf::decode_from_slice(&bytes).unwrap();
+    let decoded = ubl_nrf::nrf::decode_from_slice(&bytes).unwrap();
     assert_eq!(nrf, decoded, "deep nesting must roundtrip exactly");
     // CID determinism
     assert_eq!(canon_cid(&v), canon_cid(&v));
@@ -187,7 +187,7 @@ fn rho_11_nulls_stripped_from_map() {
     let v = load("11_nulls_vs_absence.json");
     // {"have":null,"miss":"ok"} → null stripped → only "miss" remains
     let nrf = json_to_nrf(&v).expect("null-containing map must be accepted");
-    if let ubl_ai_nrf1::nrf::NrfValue::Map(m) = &nrf {
+    if let ubl_nrf::nrf::NrfValue::Map(m) = &nrf {
         assert_eq!(m.len(), 1, "null value must be stripped from map");
         assert!(!m.contains_key("have"), "'have':null must be absent");
         assert!(m.contains_key("miss"), "'miss':'ok' must be present");
@@ -206,7 +206,7 @@ fn rho_12_large_object_deterministic() {
     assert_eq!(cid1, cid2, "large object CID must be deterministic");
     // Verify all 100 keys survived and are sorted
     let nrf = json_to_nrf(&v).unwrap();
-    if let ubl_ai_nrf1::nrf::NrfValue::Map(m) = &nrf {
+    if let ubl_nrf::nrf::NrfValue::Map(m) = &nrf {
         assert_eq!(m.len(), 100, "all 100 keys must be present");
         let keys: Vec<&String> = m.keys().collect();
         let mut sorted = keys.clone();
@@ -224,7 +224,7 @@ fn rho_13_weird_strings_accepted() {
     let v = load("13_str_weird.json");
     let nrf = json_to_nrf(&v).expect("weird but valid strings must be accepted");
     let bytes = encode_to_vec(&nrf).unwrap();
-    let decoded = ubl_ai_nrf1::nrf::decode_from_slice(&bytes).unwrap();
+    let decoded = ubl_nrf::nrf::decode_from_slice(&bytes).unwrap();
     assert_eq!(nrf, decoded, "weird strings must roundtrip exactly");
 }
 

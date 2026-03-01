@@ -131,9 +131,9 @@ impl ChipStore {
         metadata: ExecutionMetadata,
     ) -> Result<String, ChipStoreError> {
         // Compute CID for the chip data
-        let nrf1_bytes = ubl_ai_nrf1::to_nrf1_bytes(&chip_data)
+        let nrf1_bytes = ubl_nrf::to_nrf1_bytes(&chip_data)
             .map_err(|e| ChipStoreError::Serialization(e.to_string()))?;
-        let cid_str = ubl_ai_nrf1::compute_cid(&nrf1_bytes)
+        let cid_str = ubl_nrf::compute_cid(&nrf1_bytes)
             .map_err(|e| ChipStoreError::Serialization(e.to_string()))?;
         let cid = TypedCid::new_unchecked(&cid_str);
         let receipt_cid = TypedCid::new_unchecked(receipt_cid);

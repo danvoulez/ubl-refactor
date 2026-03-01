@@ -19,10 +19,10 @@ base64 = "0.22"
 flate2 = "1.0"
 
 # Other crates in workspace
-ubl_ai_nrf1 = { path = "../ubl_ai_nrf1" }
+ubl_nrf = { path = "../ubl_nrf" }
 ubl_receipt = { path = "../ubl_receipt" }
 ubl_chipstore = { path = "../ubl_chipstore" }
-rb_vm = { path = "../rb_vm" }
+ubl_vm = { path = "../ubl_vm" }
 ubl_unc1 = { path = "../ubl_unc1" }
 
 # Property testing

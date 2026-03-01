@@ -91,7 +91,7 @@ impl UblPipeline {
         check: &CheckResult,
     ) -> Result<PipelineReceipt, PipelineError> {
         // Encode chip body to NRF bytes and store as CAS input
-        let chip_nrf = ubl_ai_nrf1::to_nrf1_bytes(request.body())
+        let chip_nrf = ubl_nrf::to_nrf1_bytes(request.body())
             .map_err(|e| PipelineError::Internal(format!("TR input NRF: {}", e)))?;
 
         let mut cas = PipelineCas::new();
@@ -455,9 +455,9 @@ impl UblPipeline {
             });
         }
 
-        let nrf1_bytes = ubl_ai_nrf1::to_nrf1_bytes(&tr_body)
+        let nrf1_bytes = ubl_nrf::to_nrf1_bytes(&tr_body)
             .map_err(|e| PipelineError::Internal(format!("TR CID: {}", e)))?;
-        let cid = ubl_ai_nrf1::compute_cid(&nrf1_bytes)
+        let cid = ubl_nrf::compute_cid(&nrf1_bytes)
             .map_err(|e| PipelineError::Internal(format!("TR CID: {}", e)))?;
 
         Ok(PipelineReceipt {
@@ -588,13 +588,11 @@ impl UblPipeline {
                 "wasm_sha256": adapter_info.wasm_sha256,
                 "abi_version": adapter_info.abi_version,
             });
-            let ok = ubl_kms::verify_canonical(&vk, &attest_payload, ubl_kms::domain::CAPSULE, &sig)
-                .map_err(|e| {
-                    PipelineError::InvalidChip(format!(
-                        "WASM_VERIFY_SIGNATURE_INVALID: {}",
-                        e
-                    ))
-                })?;
+            let ok =
+                ubl_kms::verify_canonical(&vk, &attest_payload, ubl_kms::domain::CAPSULE, &sig)
+                    .map_err(|e| {
+                        PipelineError::InvalidChip(format!("WASM_VERIFY_SIGNATURE_INVALID: {}", e))
+                    })?;
             if !ok {
                 return Err(PipelineError::InvalidChip(
                     "WASM_VERIFY_SIGNATURE_INVALID: attestation signature verification failed"
@@ -907,8 +905,8 @@ impl UblPipeline {
             "fuel_used_at_tr": fuel_used,
             "policy_trace_len": policy_trace.len(),
         });
-        let artifact_cid = ubl_ai_nrf1::compute_cid(
-            &ubl_ai_nrf1::to_nrf1_bytes(&artifact_payload)
+        let artifact_cid = ubl_nrf::compute_cid(
+            &ubl_nrf::to_nrf1_bytes(&artifact_payload)
                 .map_err(|e| PipelineError::Internal(format!("audit/report NRF: {}", e)))?,
         )
         .map_err(|e| PipelineError::Internal(format!("audit/report CID: {}", e)))?;
@@ -1462,8 +1460,8 @@ impl UblPipeline {
         policy_trace: &[PolicyTraceEntry],
         runtime_version: &str,
     ) -> Result<String, PipelineError> {
-        let expected_cid = ubl_ai_nrf1::compute_cid(
-            &ubl_ai_nrf1::to_nrf1_bytes(&payload)
+        let expected_cid = ubl_nrf::compute_cid(
+            &ubl_nrf::to_nrf1_bytes(&payload)
                 .map_err(|e| PipelineError::Internal(format!("artifact NRF: {}", e)))?,
         )
         .map_err(|e| PipelineError::Internal(format!("artifact CID: {}", e)))?;

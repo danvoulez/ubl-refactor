@@ -59,7 +59,7 @@ pub fn knock_cid_from_bytes(bytes: &[u8]) -> String {
 
 /// Content-address a parsed JSON envelope using NRF-1 canonical bytes.
 pub fn knock_cid_from_value(value: &Value) -> String {
-    match ubl_ai_nrf1::to_nrf1_bytes(value).and_then(|nrf| ubl_ai_nrf1::compute_cid(&nrf)) {
+    match ubl_nrf::to_nrf1_bytes(value).and_then(|nrf| ubl_nrf::compute_cid(&nrf)) {
         Ok(cid) => cid,
         Err(_) => {
             let fallback =
@@ -97,7 +97,7 @@ fn copy_if_str(src: &Map<String, Value>, key: &str, dst: &mut Map<String, Value>
 }
 
 fn claims_fingerprint(claims: &Value) -> String {
-    match ubl_ai_nrf1::to_nrf1_bytes(claims).and_then(|nrf| ubl_ai_nrf1::compute_cid(&nrf)) {
+    match ubl_nrf::to_nrf1_bytes(claims).and_then(|nrf| ubl_nrf::compute_cid(&nrf)) {
         Ok(cid) => cid,
         Err(_) => {
             let raw = serde_json::to_vec(claims).unwrap_or_else(|_| b"{}".to_vec());

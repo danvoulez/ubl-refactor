@@ -10,7 +10,7 @@ rand = "0.8"
 blake3 = { workspace = true }
 hex = "0.4"
 base64 = "0.22"
-ubl_ai_nrf1 = { path = "../ubl_ai_nrf1" }
+ubl_nrf = { path = "../ubl_nrf" }
 serde_json = "1"
 thiserror = "1"
 bs58 = "0.5"

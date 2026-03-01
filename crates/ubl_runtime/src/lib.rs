@@ -1,6 +1,6 @@
-//! UBL Runtime - WA→TR→WF Pipeline for UBL MASTER
+//! UBL Runtime - WA→TR→WF Pipeline for UBL CORE
 //!
-//! This is the core of the UBL MASTER system, implementing the deterministic
+//! This is the core of the UBL CORE system, implementing the deterministic
 //! pipeline that processes every chip through the same 5-stage flow.
 
 pub mod advisory;

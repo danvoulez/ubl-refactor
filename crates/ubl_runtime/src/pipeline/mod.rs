@@ -18,8 +18,6 @@ use crate::policy_loader::{ChipRequest as PolicyChipRequest, PolicyLoader, Polic
 use crate::reasoning_bit::{Decision, EvalContext};
 use crate::runtime_cert::SelfAttestation;
 use crate::transition_registry::TransitionRegistry;
-use rb_vm::tlv;
-use rb_vm::{CasProvider, ExecError, Vm, VmConfig};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -31,6 +29,8 @@ use ubl_receipt::{
     CryptoMode, PipelineStage, PolicyTraceEntry, RuntimeInfo, StageExecution, UnifiedReceipt,
     WaReceiptBody, WfReceiptBody,
 };
+use ubl_vm::tlv;
+use ubl_vm::{CasProvider, ExecError, Vm, VmConfig};
 
 /// The UBL Pipeline processor
 pub struct UblPipeline {

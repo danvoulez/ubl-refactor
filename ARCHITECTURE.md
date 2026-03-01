@@ -1,4 +1,4 @@
-# UBL MASTER — Architecture & Engineering Specification
+# UBL CORE — Architecture & Engineering Specification
 
 **Status**: Active normative architecture document
 **Date**: February 20, 2026 (rev 4)

@@ -122,7 +122,7 @@ pub fn knock(bytes: &[u8]) -> Result<Value, KnockError> {
     let mut value: Value = serde_json::from_slice(bytes)
         .map_err(|e| KnockError::InputNormalization(format!("invalid JSON syntax: {}", e)))?;
 
-    value = ubl_ai_nrf1::normalize_for_input(&value).map_err(map_normalization_error)?;
+    value = ubl_nrf::normalize_for_input(&value).map_err(map_normalization_error)?;
 
     if matches!(F64ImportMode::from_env(), F64ImportMode::Bnd) {
         normalize_f64_to_bnd(&mut value)?;

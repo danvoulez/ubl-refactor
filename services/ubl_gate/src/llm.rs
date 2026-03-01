@@ -4,7 +4,10 @@ use async_stream::stream;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::{sse::{Event as SseEvent, KeepAlive, Sse}, IntoResponse, Response},
+    response::{
+        sse::{Event as SseEvent, KeepAlive, Sse},
+        IntoResponse, Response,
+    },
     Json,
 };
 use futures_util::StreamExt;
@@ -14,7 +17,9 @@ use std::time::Duration;
 
 use crate::advisor::build_advisor_snapshot;
 use crate::audit::query_audit_rows;
-use crate::console::{build_mock_24h_rows, normalize_console_tab, normalize_mock_profile, render_html};
+use crate::console::{
+    build_mock_24h_rows, normalize_console_tab, normalize_mock_profile, render_html,
+};
 use crate::events::LlmPanelQuery;
 use crate::registry::materialize_registry;
 use crate::state::AppState;
@@ -411,7 +416,11 @@ pub(crate) fn resolve_llm_endpoint() -> Result<(String, String, Option<String>),
         let key = std::env::var("OPENAI_API_KEY")
             .map_err(|_| "Neither UBL_LLM_BASE_URL nor OPENAI_API_KEY is configured".to_string())?;
         let model = std::env::var("UBL_LLM_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string());
-        Ok(("https://api.openai.com/v1/chat/completions".to_string(), model, Some(key)))
+        Ok((
+            "https://api.openai.com/v1/chat/completions".to_string(),
+            model,
+            Some(key),
+        ))
     }
 }
 

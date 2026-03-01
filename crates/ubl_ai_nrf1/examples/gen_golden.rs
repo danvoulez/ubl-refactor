@@ -1,5 +1,5 @@
 use serde_json::json;
-use ubl_ai_nrf1::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
+use ubl_nrf::nrf::{cid_from_nrf_bytes, encode_to_vec, json_to_nrf};
 
 fn cid(v: &serde_json::Value) -> String {
     let nrf = json_to_nrf(v).expect("json_to_nrf failed");

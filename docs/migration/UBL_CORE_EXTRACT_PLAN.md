@@ -83,7 +83,7 @@ After extraction, normalize provisional naming so `ubl-master` does not remain a
 - Root package name:
   - `Cargo.toml`: `name = "ubl_master"` -> `name = "ubl_core"`
 - Public branding strings:
-  - `README.md`: `UBL MASTER` -> `UBL CORE`
+  - `README.md`: `UBL CORE` -> `UBL CORE`
   - Gate health payload/system label:
     - `services/ubl_gate/src/main.rs`: `ubl-master` -> `ubl-core`
 

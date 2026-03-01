@@ -16,11 +16,12 @@ anyhow = { workspace = true }
 chrono = { version = "0.4", features = ["serde"] }
 
 ubl_runtime = { path = "../../crates/ubl_runtime" }
-ubl_ai_nrf1 = { path = "../../crates/ubl_ai_nrf1" }
+ubl_nrf = { path = "../../crates/ubl_nrf" }
 ubl_chipstore = { path = "../../crates/ubl_chipstore" }
 ubl_eventstore = { path = "../../crates/ubl_eventstore" }
 ubl_receipt = { path = "../../crates/ubl_receipt" }
-rb_vm = { path = "../../crates/rb_vm" }
+ubl_config = { path = "../../crates/ubl_config" }
+ubl_vm = { path = "../../crates/ubl_vm" }
 blake3 = { workspace = true }
 hex = "0.4"
 
