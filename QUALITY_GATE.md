@@ -6,6 +6,11 @@
 
 This is the release and merge gate policy for UBL-CORE.
 
+## Toolchain baseline
+
+- Required Rust toolchain: **1.90.0** (see `rust-toolchain.toml`).
+- Required components: `rustfmt`, `clippy`.
+
 ## Gate Levels
 
 1. G0 Local (developer machine)

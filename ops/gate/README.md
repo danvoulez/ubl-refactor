@@ -27,3 +27,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now ubl-gate
 curl -fsS http://127.0.0.1:4000/healthz
 ```
+
+## Referências
+
+- Config contract: `docs/reference/config.md`
+- Docs index oficial: `docs/index.md`
