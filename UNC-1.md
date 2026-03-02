@@ -1,5 +1,3 @@
-# UNC-1 Moved
+# UNC-1
 
-Canonical location: [`docs/canon/UNC-1.md`](./docs/canon/UNC-1.md).
-
-This stub exists for backward compatibility with older links.
+This document moved to [`docs/reference/unc-1.md`](docs/reference/unc-1.md).

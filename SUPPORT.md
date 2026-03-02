@@ -1,19 +1,16 @@
 # Support
 
-## Where to Ask What
+## Where to get help
 
-- Bug reports and feature requests: GitHub Issues in this repository.
-- Design/process questions: GitHub Issues (label as discussion/question).
-- Security vulnerabilities: private disclosure path in `SECURITY.md`.
-- Trademark and commercial questions: open a support issue and reference `TRADEMARK_POLICY.md` or `COMMERCIAL-LICENSING.md`.
+- Bug reports: open a GitHub Issue in this repository.
+- Feature requests: open a GitHub Issue and include use-case context.
+- Usage questions: open a GitHub Issue with the `question` label.
+- Security reports: follow the private disclosure process in [`SECURITY.md`](SECURITY.md).
 
-## Scope of Support
+## Scope
 
-`UBL-CORE` support covers the OSS core runtime and primitives in this repository.
-Product-specific behavior in shells should be handled in:
-- [danvoulez/UBL-SHELLS](https://github.com/danvoulez/UBL-SHELLS)
+Support in this repository covers UBL-CORE open-source components, docs, and operations content.
 
-## Response Expectations
+## Response expectations
 
-- Maintainers prioritize correctness, security, and reproducibility.
-- There is no guaranteed SLA for community support.
+Maintainers triage issues best-effort, prioritizing security, correctness, and release-blocking defects.

@@ -1,25 +1,22 @@
-# Contributing
+# Contributing Guide
 
-## Setup
+## Development setup
 
-- Rust 1.90.0 (`rust-toolchain.toml`)
-- `rustfmt` e `clippy`
+- Rust toolchain pinned in `rust-toolchain.toml`.
+- Install `rustfmt` and `clippy`.
 
-## Fluxo local mínimo
+## Local checks
+
+Run before opening a PR:
 
 ```bash
-cargo fmt --check
+cargo fmt --all -- --check
 cargo clippy --workspace --all-targets -- -D warnings
 make quality-gate
 ```
 
-## Estilo de commits e branches
+## Pull requests
 
-- Commits pequenos e objetivos.
-- Mensagens no formato `<tipo>: <resumo>`.
-- Branch com escopo claro de mudança.
-
-## Regras de documentação
-
-- Atualize `docs/index.md` quando adicionar/remover doc oficial.
-- Evite duplicação de contrato já definido no código.
+- Keep changes scoped and reviewable.
+- Update docs when behavior/contracts change.
+- Include test evidence and rationale.

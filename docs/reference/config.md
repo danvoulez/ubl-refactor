@@ -49,12 +49,12 @@ DSN efetivo para backend sqlite segue prioridade:
 
 - `UBL_PUBLIC_RECEIPT_ORIGIN` → se ausente, fallback:
   1. `UBL_RICH_URL_DOMAIN` (normalizado para `https://...`)
-  2. `https://logline.world`
+  2. `https://example.org`
 - `UBL_PUBLIC_RECEIPT_PATH` → default `/r` (sempre com `/` inicial).
 - `UBL_MCP_BASE_URL` → fallback:
   1. `UBL_API_BASE_URL`
   2. `UBL_API_DOMAIN` (normalizado para `https://...`)
-  3. `https://api.ubl.agency`
+  3. `https://api.example.org`
 
 ### Limits
 

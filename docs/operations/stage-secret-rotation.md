@@ -7,7 +7,7 @@ The pipeline keeps stage-auth secrets in runtime state and persists them in dura
 - On startup, `PipelineConfig` loads `stage_secret_current` and optional `stage_secret_prev`.
 - If durable storage has a persisted row, it overrides the startup values.
 - If no current secret is configured, pipeline derives one from the signing key (dev-safe fallback).
-- Receipt auth tokens are computed and verified using injected secrets from pipeline state.
+- Receipt auth credentials are computed and verified using injected secrets from pipeline state.
 - During `ubl/key.rotate`, pipeline updates in-memory secrets (`current <- new`, `prev <- old`) and persists both values atomically via `DurableStore`.
 
 ## Operational note
