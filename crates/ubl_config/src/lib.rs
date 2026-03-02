@@ -302,12 +302,87 @@ pub struct BuildInfoConfig {
     pub gate_binary_sha256: Option<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LlmConfig {
+    pub enabled: bool,
+    pub base_url: Option<String>,
+    pub model: String,
+    pub openai_api_key: Option<String>,
+}
+
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            base_url: None,
+            model: "gpt-4o-mini".to_string(),
+            openai_api_key: None,
+        }
+    }
+}
+
+impl LlmConfig {
+    pub fn from_env() -> Self {
+        let mut cfg = Self::default();
+        cfg.enabled = env_bool("UBL_ENABLE_REAL_LLM", false);
+        cfg.base_url = env_opt_trim("UBL_LLM_BASE_URL");
+        cfg.model = env_opt_trim("UBL_LLM_MODEL").unwrap_or_else(|| {
+            if cfg.base_url.is_some() {
+                "qwen3:4b".to_string()
+            } else {
+                cfg.model.clone()
+            }
+        });
+        cfg.openai_api_key = env_opt_trim("OPENAI_API_KEY");
+        cfg
+    }
+
+    pub fn openai_api_key_redacted(&self) -> &'static str {
+        if self.openai_api_key.is_some() {
+            "<redacted>"
+        } else {
+            "<unset>"
+        }
+    }
+
+    pub fn to_redacted_log(&self) -> String {
+        format!(
+            "llm(enabled={},base_url_set={},model={},openai_api_key={})",
+            self.enabled,
+            self.base_url.is_some(),
+            self.model,
+            self.openai_api_key_redacted(),
+        )
+    }
+}
+
 impl BuildInfoConfig {
     pub fn from_env() -> Self {
         Self {
             genesis_pubkey_sha256: env_opt_trim("UBL_GENESIS_PUBKEY_SHA256"),
             release_commit: env_opt_trim("UBL_RELEASE_COMMIT"),
             gate_binary_sha256: env_opt_trim("UBL_GATE_BINARY_SHA256"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CryptoConfig {
+    pub crypto_mode: String,
+}
+
+impl Default for CryptoConfig {
+    fn default() -> Self {
+        Self {
+            crypto_mode: "compat_v1".to_string(),
+        }
+    }
+}
+
+impl CryptoConfig {
+    pub fn from_env() -> Self {
+        Self {
+            crypto_mode: env_opt_trim("UBL_CRYPTO_MODE").unwrap_or_else(|| "compat_v1".to_string()),
         }
     }
 }
@@ -321,6 +396,8 @@ pub struct AppConfig {
     pub limits: GateLimitsConfig,
     pub write: GateWritePolicyConfig,
     pub build: BuildInfoConfig,
+    pub llm: LlmConfig,
+    pub crypto: CryptoConfig,
 }
 
 impl AppConfig {
@@ -333,6 +410,8 @@ impl AppConfig {
             limits: GateLimitsConfig::from_env(),
             write: GateWritePolicyConfig::from_env(),
             build: BuildInfoConfig::from_env(),
+            llm: LlmConfig::from_env(),
+            crypto: CryptoConfig::from_env(),
         }
     }
 
@@ -348,7 +427,7 @@ impl AppConfig {
 
     pub fn to_redacted_log(&self) -> String {
         format!(
-            "gate(bind={},data_dir={}) storage(backend={},dsn_set={},idempotency_dsn_set={},outbox_dsn_set={},eventstore_enabled={},eventstore_path={})",
+            "gate(bind={},data_dir={}) storage(backend={},dsn_set={},idempotency_dsn_set={},outbox_dsn_set={},eventstore_enabled={},eventstore_path={}) {}",
             self.gate.bind,
             self.gate.data_dir,
             self.storage.backend,
@@ -357,6 +436,7 @@ impl AppConfig {
             self.storage.outbox_dsn.is_some(),
             self.storage.eventstore_enabled,
             self.storage.eventstore_path,
+            self.llm.to_redacted_log(),
         )
     }
 }

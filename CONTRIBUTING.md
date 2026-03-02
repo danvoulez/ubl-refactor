@@ -4,9 +4,9 @@ Thanks for contributing. `UBL-CORE` is the open-source foundation of the UBL run
 
 ## Before You Start
 
-- Read `README.md` and `docs/INDEX.md`.
+- Read `README.md` and `docs/index.md`.
 - For behavior/security changes, review `ARCHITECTURE.md` and `SECURITY.md`.
-- For repo boundaries (core vs shells), read `docs/oss/OPEN_SOURCE_SCOPE.md`.
+- For repo boundaries (core vs shells), read `docs/oss/docs/index.md.md`.
 - For high-impact contract changes, read `RFC_PROCESS.md` and open RFC first.
 
 ## Local Development

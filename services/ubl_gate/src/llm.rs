@@ -25,17 +25,6 @@ use crate::registry::materialize_registry;
 use crate::state::AppState;
 use crate::templates::LlmPanelTemplate;
 
-fn env_bool(name: &str, default: bool) -> bool {
-    std::env::var_os(name)
-        .map(|v| {
-            matches!(
-                v.to_string_lossy().as_ref(),
-                "1" | "true" | "TRUE" | "yes" | "on"
-            )
-        })
-        .unwrap_or(default)
-}
-
 // ── Panel handler ─────────────────────────────────────────────────────────────
 
 pub(crate) async fn ui_llm_panel(
@@ -58,15 +47,15 @@ pub(crate) async fn ui_llm_panel(
     let (mut severity, mut summary, mut bullets) = heuristic_analysis(&page, &context);
     let mut source = "heuristic local mock".to_string();
 
-    if llm_is_enabled() {
-        if let Ok(text) = call_real_llm(&state.http_client, &page, &context).await {
+    if llm_is_enabled(&state) {
+        if let Ok(text) = call_real_llm(&state, &page, &context).await {
             let (llm_summary, llm_bullets) = parse_llm_text(&text);
             summary = llm_summary;
             if !llm_bullets.is_empty() {
                 bullets = llm_bullets;
             }
             severity = "LLM".to_string();
-            source = llm_source_label();
+            source = llm_source_label(&state);
         }
     }
 
@@ -105,7 +94,7 @@ pub(crate) async fn ui_llm_panel_stream(
     )
     .await;
 
-    call_real_llm_stream_sse(state.http_client.clone(), page, context).await
+    call_real_llm_stream_sse(state, page, context).await
 }
 
 // ── Context builder ───────────────────────────────────────────────────────────
@@ -392,44 +381,31 @@ pub(crate) fn heuristic_analysis(page: &str, context: &Value) -> (String, String
 
 // ── LLM backend helpers ───────────────────────────────────────────────────────
 
-fn env_var(name: &str) -> Option<String> {
-    std::env::var_os(name).map(|v| v.to_string_lossy().to_string())
+pub(crate) fn llm_is_enabled(state: &AppState) -> bool {
+    state.llm.enabled || state.llm.base_url.is_some()
 }
 
-pub(crate) fn llm_is_enabled() -> bool {
-    env_bool("UBL_ENABLE_REAL_LLM", false)
-        || env_var("UBL_LLM_BASE_URL")
-            .filter(|s| !s.is_empty())
-            .is_some()
-}
-
-pub(crate) fn llm_source_label() -> String {
-    if env_var("UBL_LLM_BASE_URL")
-        .filter(|s| !s.is_empty())
-        .is_some()
-    {
-        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "qwen3:4b".to_string());
-        format!("local ollama ({})", model)
+pub(crate) fn llm_source_label(state: &AppState) -> String {
+    if state.llm.base_url.is_some() {
+        format!("local ollama ({})", state.llm.model)
     } else {
-        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "gpt-4o-mini".to_string());
-        format!("openai ({})", model)
+        format!("openai ({})", state.llm.model)
     }
 }
 
-pub(crate) fn resolve_llm_endpoint() -> Result<(String, String, Option<String>), String> {
-    let base_url = env_var("UBL_LLM_BASE_URL").filter(|s| !s.is_empty());
-    if let Some(ref base) = base_url {
-        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "qwen3:4b".to_string());
+pub(crate) fn resolve_llm_endpoint(
+    state: &AppState,
+) -> Result<(String, String, Option<String>), String> {
+    if let Some(ref base) = state.llm.base_url {
         let url = format!("{}/v1/chat/completions", base.trim_end_matches('/'));
-        Ok((url, model, None))
+        Ok((url, state.llm.model.clone(), None))
     } else {
-        let key = env_var("OPENAI_API_KEY").ok_or_else(|| {
+        let key = state.llm.openai_api_key.clone().ok_or_else(|| {
             "Neither UBL_LLM_BASE_URL nor OPENAI_API_KEY is configured".to_string()
         })?;
-        let model = env_var("UBL_LLM_MODEL").unwrap_or_else(|| "gpt-4o-mini".to_string());
         Ok((
             "https://api.openai.com/v1/chat/completions".to_string(),
-            model,
+            state.llm.model.clone(),
             Some(key),
         ))
     }
@@ -453,14 +429,12 @@ pub(crate) fn llm_system_prompt(page: &str) -> &'static str {
 }
 
 pub(crate) async fn call_real_llm(
-    client: &reqwest::Client,
+    state: &AppState,
     page: &str,
     context: &Value,
 ) -> Result<String, String> {
-    let (endpoint, model, api_key) = resolve_llm_endpoint()?;
-    let timeout_ms = env_var("UBL_LLM_TIMEOUT_MS")
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(12_000);
+    let (endpoint, model, api_key) = resolve_llm_endpoint(state)?;
+    let timeout_ms = 12_000;
 
     let user_msg = format!("Contexto (página '{}'): {}", page, context);
     let payload = json!({
@@ -474,7 +448,8 @@ pub(crate) async fn call_real_llm(
         "stream": false
     });
 
-    let mut req = client
+    let mut req = state
+        .http_client
         .post(&endpoint)
         .timeout(std::time::Duration::from_millis(timeout_ms))
         .json(&payload);
@@ -501,11 +476,11 @@ pub(crate) async fn call_real_llm(
 }
 
 pub(crate) async fn call_real_llm_stream_sse(
-    client: reqwest::Client,
+    state: AppState,
     page: String,
     context: Value,
 ) -> Response {
-    let (endpoint, model, api_key) = match resolve_llm_endpoint() {
+    let (endpoint, model, api_key) = match resolve_llm_endpoint(&state) {
         Ok(v) => v,
         Err(e) => {
             return (
@@ -516,9 +491,7 @@ pub(crate) async fn call_real_llm_stream_sse(
         }
     };
 
-    let timeout_ms = env_var("UBL_LLM_TIMEOUT_MS")
-        .and_then(|v| v.parse::<u64>().ok())
-        .unwrap_or(30_000);
+    let timeout_ms = 30_000;
 
     let user_msg = format!("Contexto (página '{}'): {}", page, context);
     let payload = json!({
@@ -532,7 +505,8 @@ pub(crate) async fn call_real_llm_stream_sse(
         "stream": true
     });
 
-    let mut req = client
+    let mut req = state
+        .http_client
         .post(&endpoint)
         .timeout(std::time::Duration::from_millis(timeout_ms))
         .json(&payload);

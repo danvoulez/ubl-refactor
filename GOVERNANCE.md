@@ -11,10 +11,10 @@ Keep documentation and architecture decisions coherent, auditable, and low-drift
 ## Canonical Rules
 
 - One authoritative document per topic.
-- `docs/INDEX.md` is the documentation entry point.
+- `docs/index.md` is the documentation entry point.
 - `ARCHITECTURE.md` is normative for system design/invariants.
 - `TASKLIST.md` tracks execution status.
-- `docs/oss/OPEN_SOURCE_SCOPE.md` defines what belongs in OSS core vs product shells.
+- `docs/oss/docs/index.md.md` defines what belongs in OSS core vs product shells.
 - `RFC_PROCESS.md` governs proposal flow for high-impact changes.
 
 ## Update Discipline
@@ -44,7 +44,7 @@ Keep documentation and architecture decisions coherent, auditable, and low-drift
 ## Related Documents
 
 - `docs/STANDARDS.md`
-- `docs/INDEX.md`
+- `docs/index.md`
 - `docs/adr/0001-DOC-GOVERNANCE.md`
 - `CONTRIBUTING.md`
 - `CODE_OF_CONDUCT.md`

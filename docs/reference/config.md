@@ -11,6 +11,7 @@ Fonte única de verdade: `crates/ubl_config/src/lib.rs`.
 - `limits`: limites de canon e MCP.
 - `write`: política de escrita pública/autenticada.
 - `build`: metadados de build publicados pelo Gate.
+- `llm`: configuração do backend LLM (OpenAI/local).
 
 ## ENVs e defaults/fallbacks
 
@@ -70,6 +71,14 @@ DSN efetivo para backend sqlite segue prioridade:
 - `UBL_PUBLIC_WRITE_TYPES` → CSV; quando vazio, default:
   - `ubl/document`
   - `audit/advisory.request.v1`
+
+
+### LLM
+
+- `UBL_ENABLE_REAL_LLM` → default `false` (`1|true|TRUE|yes|on`).
+- `UBL_LLM_BASE_URL` → opcional (trim; vazio = `None`).
+- `UBL_LLM_MODEL` → default `qwen3:4b` quando `UBL_LLM_BASE_URL` está setada; caso contrário `gpt-4o-mini`.
+- `OPENAI_API_KEY` (**secret**) → opcional (trim; vazio = `None`).
 
 ### Build info
 
