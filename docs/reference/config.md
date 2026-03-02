@@ -85,6 +85,14 @@ DSN efetivo para backend sqlite segue prioridade:
 
 - `UBL_CRYPTO_MODE` (string) → default `compat_v1`.
 - Uso: compatibilidade e métricas; não há secret nesse campo e ele não deve carregar segredos.
+- Validação: valores inválidos devem falhar cedo no bootstrap/config parse (não em tempo de assinatura).
+- Observabilidade: o valor resolvido de `crypto_mode` aparece em logs redacted de bootstrap para facilitar diagnóstico sem expor segredos.
+
+## Determinismo e caminho crítico
+
+- O caminho crítico do pipeline/core deve receber configuração injetada (`PipelineConfig`/`AppConfig`) e **não** consultar ENV em produção.
+- Wrappers legados de `*_from_env` permanecem apenas para compatibilidade e migração incremental; o uso recomendado para novos fluxos é injeção explícita.
+- Regressões em bytes canônicos/outputs de vetores devem ser tratadas como breaking change de contrato.
 
 ### Build info
 

@@ -23,6 +23,13 @@
 - Corrigir backend de storage/DSN indisponível.
 - Atualizar deployment com imagem válida.
 
+
+## Key rotation (stage secret)
+- Não usar mutação de ENV em runtime (`set_var`) como mecanismo de rotação.
+- O estado ativo/anterior do segredo deve ficar em memória e ser persistido no `DurableStore` para recuperação.
+- Em implementação com lock (`Arc<RwLock<...>>`), manter lock pelo menor tempo possível e **não** segurar lock durante `await`/I/O.
+- Referência operacional detalhada: `docs/operations/stage-secret-rotation.md`.
+
 ## Rollback
 - Reverter para última versão estável da imagem/binário.
 - Restaurar arquivo de ambiente anterior.
