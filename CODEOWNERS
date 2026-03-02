@@ -1,7 +1,7 @@
 # Global fallback
-* @REPLACE_ME
+* @danvoulez
 
-/crates/ @REPLACE_ME
-/services/ @REPLACE_ME
-/ops/ @REPLACE_ME
-/docs/ @REPLACE_ME
+/crates/ @danvoulez
+/services/ @danvoulez
+/ops/ @danvoulez
+/docs/ @danvoulez

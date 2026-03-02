@@ -2,7 +2,7 @@
 
 ## Current maintainers
 
-- `@REPLACE_ME` (replace with your GitHub org/team or maintainer handle)
+- `@danvoulez`
 
 ## Becoming a maintainer
 
