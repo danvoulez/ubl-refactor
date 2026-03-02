@@ -1,0 +1,57 @@
+name: WASM Conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wasm-conformance:
+    name: wasm-conformance
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run conformance suite
+        run: bash scripts/conformance_suite.sh --out-dir artifacts/conformance
+
+      - name: Conformance summary
+        if: always()
+        run: |
+          if [ -f artifacts/conformance/latest.json ]; then
+            total=$(jq -r '.totals.total' artifacts/conformance/latest.json)
+            pass=$(jq -r '.totals.pass' artifacts/conformance/latest.json)
+            fail=$(jq -r '.totals.fail' artifacts/conformance/latest.json)
+            ok=$(jq -r '.ok' artifacts/conformance/latest.json)
+            {
+              echo "## WASM Conformance Summary"
+              echo "- total: ${total}"
+              echo "- pass: ${pass}"
+              echo "- fail: ${fail}"
+              echo "- ok: ${ok}"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No conformance summary produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload conformance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-conformance-report
+          path: artifacts/conformance/**
+          if-no-files-found: warn
+          retention-days: 30

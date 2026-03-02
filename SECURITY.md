@@ -2,10 +2,10 @@
 
 ## Reporting a vulnerability
 
-Please report vulnerabilities privately and do not open a public issue.
+Do not file public issues for security vulnerabilities.
 
-- Use repository security advisory reporting, when available.
-- If advisory tooling is unavailable, open a private maintainer contact request via support channels and mark it as `SECURITY`.
+- Report via email: `security@logline.foundation`.
+- Report via GitHub Security Advisories (preferred if enabled).
 
 Include:
 - affected component/version

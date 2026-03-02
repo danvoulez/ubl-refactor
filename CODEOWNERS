@@ -1,7 +1,7 @@
 # Global fallback
-* @danvoulez
+* @LogLine-Foundation/maintainers
 
-/crates/ @danvoulez
-/services/ @danvoulez
-/ops/ @danvoulez
-/docs/ @danvoulez
+/crates/ @LogLine-Foundation/maintainers
+/services/ @LogLine-Foundation/maintainers
+/ops/ @LogLine-Foundation/maintainers
+/docs/ @LogLine-Foundation/maintainers

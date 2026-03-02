@@ -29,8 +29,7 @@ cargo test -p ubl_runtime stage_runtime_executes_wasm_conformance_vectors -- --n
 
 The test loader resolves vectors from:
 
-1. `docs/wasm/conformance/vectors/v1` (current location)
-2. `docs/archive/2026-03/legacy/wasm/conformance/vectors/v1` (legacy fallback)
+1. `docs/wasm/conformance/vectors/v1`
 
 ## Schema
 
