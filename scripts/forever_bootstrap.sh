@@ -9,7 +9,7 @@ DRY_RUN="false"
 
 usage() {
   cat <<USAGE
-Enterprise idempotent bootstrap for UBL forever host (LAB 512).
+Enterprise idempotent bootstrap for UBL forever host (production tier).
 
 Usage:
   scripts/forever_bootstrap.sh [--env <file>] [--dry-run]
