@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use axum::http::HeaderMap;
 use ubl_chipstore::ChipStore;
 use ubl_eventstore::EventStore;
+use ubl_receipt::CryptoMode;
 use ubl_runtime::advisory::AdvisoryEngine;
 use ubl_runtime::durable_store::DurableStore;
 use ubl_runtime::error_response::ErrorCode;
@@ -33,7 +34,7 @@ pub(crate) struct AppState {
     pub gate_binary_sha256: Option<String>,
     pub write_access_policy: Arc<WriteAccessPolicy>,
     pub llm: LlmConfig,
-    pub crypto_mode: String,
+    pub crypto_mode: CryptoMode,
 }
 
 #[derive(Clone)]

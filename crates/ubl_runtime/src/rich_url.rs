@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
+use ubl_receipt::CryptoMode;
 
 /// Signing domain for URL signatures.
 pub const URL_SIGN_DOMAIN: &str = ubl_canon::domains::RICH_URL;
@@ -697,15 +698,29 @@ fn verify_signature_by_env(
     app: Option<&str>,
     tenant: Option<&str>,
 ) -> bool {
+    let mode = std::env::var("UBL_CRYPTO_MODE")
+        .ok()
+        .and_then(|raw| CryptoMode::parse(&raw).ok())
+        .unwrap_or(CryptoMode::CompatV1);
+    verify_signature_with_mode(payload, vk, sig, mode, app, tenant)
+}
+
+fn verify_signature_with_mode(
+    payload: &[u8],
+    vk: &ubl_kms::Ed25519VerifyingKey,
+    sig: &str,
+    crypto_mode: CryptoMode,
+    app: Option<&str>,
+    tenant: Option<&str>,
+) -> bool {
     let v1 = ubl_canon::verify_raw_v1(payload, URL_SIGN_DOMAIN, vk, sig).unwrap_or(false);
     let v2 =
         ubl_canon::verify_raw_v2_hash_first(payload, URL_SIGN_DOMAIN, vk, sig).unwrap_or(false);
 
-    let mode = std::env::var("UBL_CRYPTO_MODE").unwrap_or_else(|_| "compat_v1".to_string());
     let v2_enforce = env_bool("UBL_CRYPTO_V2_ENFORCE")
         || scope_match_env("UBL_CRYPTO_V2_ENFORCE_SCOPES", app, tenant);
 
-    if mode.eq_ignore_ascii_case("hash_first_v2") {
+    if matches!(crypto_mode, CryptoMode::HashFirstV2) {
         v2
     } else if v2_enforce {
         v1 && v2

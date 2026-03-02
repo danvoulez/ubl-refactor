@@ -14,11 +14,13 @@ use std::time::Duration;
 use tracing::{error, info, warn};
 use ubl_chipstore::{ChipStore, SledBackend};
 use ubl_eventstore::EventStore;
+use ubl_receipt::CryptoMode;
 use ubl_runtime::advisory::AdvisoryEngine;
 use ubl_runtime::durable_store::DurableStore;
 use ubl_runtime::event_bus::EventBus;
 use ubl_runtime::manifest::GateManifest;
 use ubl_runtime::outbox_dispatcher::OutboxDispatcher;
+use ubl_runtime::pipeline::PipelineConfig;
 use ubl_runtime::policy_loader::InMemoryPolicyStorage;
 use ubl_runtime::rate_limit::{CanonRateLimiter, RateLimitConfig};
 use ubl_runtime::UblPipeline;
@@ -82,8 +84,17 @@ pub async fn run(config: ubl_config::AppConfig) -> Result<(), Box<dyn std::error
     let backend = Arc::new(SledBackend::new(&chips_dir)?);
     let chip_store = Arc::new(ChipStore::new_with_rebuild(backend).await?);
 
+    let crypto_mode = CryptoMode::parse(&config.crypto.crypto_mode)
+        .map_err(|e| format!("invalid config.crypto.crypto_mode: {}", e))?;
+    let mut pipeline_cfg = PipelineConfig::from_env();
+    pipeline_cfg.crypto_mode = crypto_mode;
+
     let storage = InMemoryPolicyStorage::new();
-    let mut pipeline = UblPipeline::with_chip_store(Box::new(storage), chip_store.clone());
+    let mut pipeline = UblPipeline::with_chip_store_and_config(
+        Box::new(storage),
+        chip_store.clone(),
+        pipeline_cfg,
+    );
 
     let advisory_engine = Arc::new(AdvisoryEngine::new(
         "b3:gate-passport".to_string(),
@@ -265,7 +276,7 @@ pub async fn run(config: ubl_config::AppConfig) -> Result<(), Box<dyn std::error
         gate_binary_sha256: config.build.gate_binary_sha256.clone(),
         write_access_policy,
         llm: config.llm.clone(),
-        crypto_mode: config.crypto.crypto_mode.clone(),
+        crypto_mode,
     };
 
     let app = build_router(state);
@@ -424,7 +435,7 @@ mod tests {
             gate_binary_sha256: Some("b3:test-runtime-hash".to_string()),
             write_access_policy: Arc::new(WriteAccessPolicy::open_for_tests()),
             llm: ubl_config::LlmConfig::default(),
-            crypto_mode: "compat_v1".to_string(),
+            crypto_mode: CryptoMode::CompatV1,
         }
     }
 

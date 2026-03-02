@@ -57,6 +57,45 @@ pub struct UblPipeline {
     durable_store: Option<Arc<DurableStore>>,
     /// Deterministic transition bytecode selector.
     transition_registry: Arc<TransitionRegistry>,
+    /// Runtime pipeline configuration (explicitly injected).
+    pipeline_config: PipelineConfig,
+    stage_secrets: Arc<RwLock<StageSecrets>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PipelineConfig {
+    pub crypto_mode: CryptoMode,
+    pub require_unc1_numeric: bool,
+    pub f64_import_mode: crate::knock::F64ImportMode,
+    pub durable_store: Option<Arc<DurableStore>>,
+    pub transition_registry: Arc<TransitionRegistry>,
+    pub stage_secret_current: String,
+    pub stage_secret_prev: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+struct StageSecrets {
+    current: String,
+    prev: Option<String>,
+}
+
+impl PipelineConfig {
+    pub fn from_env() -> Self {
+        Self {
+            crypto_mode: std::env::var("UBL_CRYPTO_MODE")
+                .ok()
+                .and_then(|raw| CryptoMode::parse(&raw).ok())
+                .unwrap_or(CryptoMode::CompatV1),
+            require_unc1_numeric: std::env::var("REQUIRE_UNC1_NUMERIC")
+                .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+                .unwrap_or(false),
+            f64_import_mode: crate::knock::F64ImportMode::from_env(),
+            durable_store: load_durable_store(),
+            transition_registry: load_transition_registry(),
+            stage_secret_current: std::env::var("UBL_STAGE_SECRET").unwrap_or_default(),
+            stage_secret_prev: std::env::var("UBL_STAGE_SECRET_PREV").ok(),
+        }
+    }
 }
 
 const DEFAULT_FUEL_LIMIT: u64 = 1_000_000;
@@ -88,17 +127,15 @@ fn load_transition_registry() -> Arc<TransitionRegistry> {
     }
 }
 
-/// GAP-15: if the DurableStore has a persisted stage-secret row, load it into env
-/// so that `UnifiedReceipt::verify_auth_chain` uses the correct current/prev values
-/// after a restart that followed a key rotation.
-fn apply_persisted_stage_secrets(durable: &Option<Arc<DurableStore>>) {
+/// GAP-15: if the DurableStore has a persisted stage-secret row, load it into config
+/// so that receipt auth-chain uses the correct current/prev values after restart.
+fn apply_persisted_stage_secrets(config: &mut PipelineConfig) {
+    let durable = &config.durable_store;
     let Some(ds) = durable else { return };
     match ds.get_stage_secrets() {
         Ok(Some(row)) => {
-            std::env::set_var("UBL_STAGE_SECRET", row.current);
-            if let Some(prev) = row.prev {
-                std::env::set_var("UBL_STAGE_SECRET_PREV", prev);
-            }
+            config.stage_secret_current = row.current;
+            config.stage_secret_prev = row.prev;
         }
         Ok(None) => {}
         Err(_) => {}
@@ -191,35 +228,41 @@ impl UblPipeline {
     }
     /// Load signing key from env (`SIGNING_KEY_HEX`) or generate a dev key.
     fn load_or_generate_key() -> SigningKey {
-        let key = match ubl_kms::signing_key_from_env() {
+        match ubl_kms::signing_key_from_env() {
             Ok(key) => key,
             Err(_) => ubl_kms::generate_signing_key(),
-        };
+        }
+    }
 
-        // Stage auth secret bootstrap:
-        // If UBL_STAGE_SECRET is not provided, derive a process-local default
-        // using domain-separated BLAKE3 keyed mode (never raw signing key bytes).
-        if std::env::var("UBL_STAGE_SECRET").is_err() {
-            let derived = derive_stage_secret(&key);
-            std::env::set_var("UBL_STAGE_SECRET", format!("hex:{}", hex::encode(derived)));
+    fn ensure_stage_secret_config(config: &mut PipelineConfig, key: &SigningKey) {
+        if config.stage_secret_current.is_empty() {
+            let derived = derive_stage_secret(key);
+            config.stage_secret_current = format!("hex:{}", hex::encode(derived));
             if is_non_dev_env() {
                 warn!(
-                    "UBL_STAGE_SECRET missing; derived fallback injected. Set UBL_STAGE_SECRET explicitly in non-dev environments."
+                    "UBL_STAGE_SECRET missing; derived fallback injected into runtime config. Set UBL_STAGE_SECRET explicitly in non-dev environments."
                 );
             }
         }
-
-        key
     }
 
     /// Create a new pipeline instance
     pub fn new(storage: Box<dyn PolicyStorage>) -> Self {
+        Self::with_config(storage, PipelineConfig::from_env())
+    }
+
+    pub fn with_config(storage: Box<dyn PolicyStorage>, mut config: PipelineConfig) -> Self {
         let key = Self::load_or_generate_key();
         let vk = key.verifying_key();
         let did = did_from_verifying_key(&vk);
         let kid = kid_from_verifying_key(&vk);
-        let durable_store = load_durable_store();
-        apply_persisted_stage_secrets(&durable_store);
+        apply_persisted_stage_secrets(&mut config);
+        Self::ensure_stage_secret_config(&mut config, &key);
+        let stage_secrets = StageSecrets {
+            current: config.stage_secret_current.clone(),
+            prev: config.stage_secret_prev.clone(),
+        };
+        let durable_store = config.durable_store.clone();
         Self {
             policy_loader: PolicyLoader::new(storage),
             fuel_limit: DEFAULT_FUEL_LIMIT,
@@ -234,18 +277,33 @@ impl UblPipeline {
             signing_key: Arc::new(key),
             ledger: Arc::new(NullLedger),
             durable_store,
-            transition_registry: load_transition_registry(),
+            transition_registry: config.transition_registry.clone(),
+            pipeline_config: config,
+            stage_secrets: Arc::new(RwLock::new(stage_secrets)),
         }
     }
 
     /// Create pipeline with existing event bus
     pub fn with_event_bus(storage: Box<dyn PolicyStorage>, event_bus: Arc<EventBus>) -> Self {
+        Self::with_event_bus_and_config(storage, event_bus, PipelineConfig::from_env())
+    }
+
+    pub fn with_event_bus_and_config(
+        storage: Box<dyn PolicyStorage>,
+        event_bus: Arc<EventBus>,
+        mut config: PipelineConfig,
+    ) -> Self {
         let key = Self::load_or_generate_key();
         let vk = key.verifying_key();
         let did = did_from_verifying_key(&vk);
         let kid = kid_from_verifying_key(&vk);
-        let durable_store = load_durable_store();
-        apply_persisted_stage_secrets(&durable_store);
+        apply_persisted_stage_secrets(&mut config);
+        Self::ensure_stage_secret_config(&mut config, &key);
+        let stage_secrets = StageSecrets {
+            current: config.stage_secret_current.clone(),
+            prev: config.stage_secret_prev.clone(),
+        };
+        let durable_store = config.durable_store.clone();
         Self {
             policy_loader: PolicyLoader::new(storage),
             fuel_limit: DEFAULT_FUEL_LIMIT,
@@ -260,18 +318,33 @@ impl UblPipeline {
             signing_key: Arc::new(key),
             ledger: Arc::new(NullLedger),
             durable_store,
-            transition_registry: load_transition_registry(),
+            transition_registry: config.transition_registry.clone(),
+            pipeline_config: config,
+            stage_secrets: Arc::new(RwLock::new(stage_secrets)),
         }
     }
 
     /// Create pipeline with ChipStore for persistence
     pub fn with_chip_store(storage: Box<dyn PolicyStorage>, chip_store: Arc<ChipStore>) -> Self {
+        Self::with_chip_store_and_config(storage, chip_store, PipelineConfig::from_env())
+    }
+
+    pub fn with_chip_store_and_config(
+        storage: Box<dyn PolicyStorage>,
+        chip_store: Arc<ChipStore>,
+        mut config: PipelineConfig,
+    ) -> Self {
         let key = Self::load_or_generate_key();
         let vk = key.verifying_key();
         let did = did_from_verifying_key(&vk);
         let kid = kid_from_verifying_key(&vk);
-        let durable_store = load_durable_store();
-        apply_persisted_stage_secrets(&durable_store);
+        apply_persisted_stage_secrets(&mut config);
+        Self::ensure_stage_secret_config(&mut config, &key);
+        let stage_secrets = StageSecrets {
+            current: config.stage_secret_current.clone(),
+            prev: config.stage_secret_prev.clone(),
+        };
+        let durable_store = config.durable_store.clone();
         Self {
             policy_loader: PolicyLoader::new(storage),
             fuel_limit: DEFAULT_FUEL_LIMIT,
@@ -286,7 +359,9 @@ impl UblPipeline {
             signing_key: Arc::new(key),
             ledger: Arc::new(NullLedger),
             durable_store,
-            transition_registry: load_transition_registry(),
+            transition_registry: config.transition_registry.clone(),
+            pipeline_config: config,
+            stage_secrets: Arc::new(RwLock::new(stage_secrets)),
         }
     }
 
