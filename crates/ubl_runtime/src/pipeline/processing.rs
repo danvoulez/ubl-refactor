@@ -1,11 +1,27 @@
 use super::*;
 
 impl UblPipeline {
+    async fn append_stage_receipt(
+        &self,
+        receipt: &mut UnifiedReceipt,
+        stage: StageExecution,
+    ) -> Result<(), PipelineError> {
+        let secrets = self.stage_secrets.read().await;
+        receipt
+            .append_stage_with_secrets(&secrets.current, secrets.prev.as_deref(), stage)
+            .map_err(|e| PipelineError::Internal(format!("Receipt append stage: {}", e)))
+    }
+
     /// Process raw bytes through the full KNOCK→WA→CHECK→TR→WF pipeline.
     /// Use this when you have raw HTTP body bytes (e.g. from the gate).
     pub async fn process_raw(&self, bytes: &[u8]) -> Result<PipelineResult, PipelineError> {
         // Stage 0: KNOCK
-        let value = crate::knock::knock(bytes).map_err(|e| PipelineError::Knock(e.to_string()))?;
+        let value = crate::knock::knock_with_options(
+            bytes,
+            self.pipeline_config.require_unc1_numeric,
+            self.pipeline_config.f64_import_mode,
+        )
+        .map_err(|e| PipelineError::Knock(e.to_string()))?;
         let knock_cid = crate::authorship::knock_cid_from_bytes(bytes);
         let subject_did = crate::authorship::resolve_subject_did(Some(&value), None);
 
@@ -145,8 +161,9 @@ impl UblPipeline {
         let wa_ms = wa_start.elapsed().as_millis() as i64;
         debug!(chip_type = %parsed_request.chip_type, duration_ms = wa_ms, "stage wa completed");
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::WriteAhead,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: wa_receipt.body_cid.as_str().to_string(),
@@ -157,8 +174,10 @@ impl UblPipeline {
                 vm_sig_payload_cid: None,
                 auth_token: String::new(),
                 duration_ms: wa_ms,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt WA: {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt WA: {}", e)))?;
 
         // Publish WA event
         if let Err(e) = self
@@ -196,8 +215,9 @@ impl UblPipeline {
             "stage check completed"
         );
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::Check,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: wa_receipt.body_cid.as_str().to_string(),
@@ -208,8 +228,10 @@ impl UblPipeline {
                 vm_sig_payload_cid: None,
                 auth_token: String::new(),
                 duration_ms: check_ms,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt CHECK: {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt CHECK: {}", e)))?;
 
         // Post-CHECK advisory hook (non-blocking) — explain denial
         if let (Some(ref engine), Some(ref store)) = (&self.advisory_engine, &self.chip_store) {
@@ -249,15 +271,17 @@ impl UblPipeline {
 
         // Short-circuit if denied
         if matches!(check.decision, Decision::Deny) {
-            receipt.deny(&check.reason);
+            let secrets = self.stage_secrets.read().await;
+            receipt.deny_with_secrets(&check.reason, Some(&secrets.current));
 
             let deny_ms = pipeline_start.elapsed().as_millis() as i64;
             let wf_receipt = self
                 .create_deny_receipt(&wa_receipt, &check, deny_ms)
                 .await?;
 
-            receipt
-                .append_stage(StageExecution {
+            self.append_stage_receipt(
+                &mut receipt,
+                StageExecution {
                     stage: PipelineStage::WriteFinished,
                     timestamp: chrono::Utc::now().to_rfc3339(),
                     input_cid: wa_receipt.body_cid.as_str().to_string(),
@@ -268,10 +292,12 @@ impl UblPipeline {
                     vm_sig_payload_cid: None,
                     auth_token: String::new(),
                     duration_ms: deny_ms,
-                })
-                .map_err(|e| PipelineError::Internal(format!("Receipt WF(DENY): {}", e)))?;
+                },
+            )
+            .await
+            .map_err(|e| PipelineError::Internal(format!("Receipt WF(DENY): {}", e)))?;
             receipt
-                .finalize_and_sign(&self.signing_key, CryptoMode::from_env())
+                .finalize_and_sign(&self.signing_key, self.pipeline_config.crypto_mode)
                 .map_err(|e| PipelineError::SignError(format!("WF(DENY) sign failed: {}", e)))?;
 
             if let Err(e) = self
@@ -334,8 +360,9 @@ impl UblPipeline {
             .and_then(|v| v.get("fuel_used"))
             .and_then(|v| v.as_u64());
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::Transition,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: wa_receipt.body_cid.as_str().to_string(),
@@ -354,8 +381,10 @@ impl UblPipeline {
                     .map(|s| s.to_string()),
                 auth_token: String::new(),
                 duration_ms: tr_ms,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt TR: {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt TR: {}", e)))?;
 
         // Publish TR event
         if let Err(e) = self
@@ -397,8 +426,9 @@ impl UblPipeline {
         let wf_ms = wf_start.elapsed().as_millis() as i64;
         debug!(chip_type = %parsed_request.chip_type, duration_ms = wf_ms, "stage wf completed");
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::WriteFinished,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: tr_receipt.body_cid.as_str().to_string(),
@@ -409,10 +439,12 @@ impl UblPipeline {
                 vm_sig_payload_cid: None,
                 auth_token: String::new(),
                 duration_ms: wf_ms,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt WF: {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt WF: {}", e)))?;
 
-        let crypto_mode = CryptoMode::from_env();
+        let crypto_mode = self.pipeline_config.crypto_mode;
         receipt
             .finalize_and_sign(&self.signing_key, crypto_mode)
             .map_err(|e| PipelineError::SignError(format!("WF finalize/sign failed: {}", e)))?;
@@ -497,9 +529,7 @@ impl UblPipeline {
                         PipelineError::StorageError(format!("key.rotate mapping store: {}", e))
                     })?;
 
-                // GAP-15: rotate the stage secret so the auth chain remains valid
-                // after the signing key changes. UnifiedReceipt reads UBL_STAGE_SECRET
-                // and UBL_STAGE_SECRET_PREV from env at verify time.
+                // GAP-15: rotate stage secret in runtime state and durable store.
                 {
                     let new_sk = crate::key_rotation::derive_new_signing_key(
                         parsed_request.body(),
@@ -508,11 +538,13 @@ impl UblPipeline {
                     .map_err(|e| PipelineError::Internal(format!("key rotation new key: {}", e)))?;
                     let new_secret = super::derive_stage_secret(&new_sk);
                     let new_secret_env = format!("hex:{}", hex::encode(new_secret));
-                    let prev = std::env::var("UBL_STAGE_SECRET").ok();
-                    std::env::set_var("UBL_STAGE_SECRET", &new_secret_env);
-                    if let Some(ref p) = prev {
-                        std::env::set_var("UBL_STAGE_SECRET_PREV", p);
-                    }
+                    let prev = {
+                        let mut secrets = self.stage_secrets.write().await;
+                        let prev = Some(secrets.current.clone());
+                        secrets.current = new_secret_env.clone();
+                        secrets.prev = prev.clone();
+                        prev
+                    };
                     if let Some(ds) = &self.durable_store {
                         ds.put_stage_secrets(&new_secret_env, prev.as_deref())
                             .map_err(|e| {
@@ -624,8 +656,9 @@ impl UblPipeline {
             .with_knock_cid(Some(knock_cid));
         receipt.receipt_type = "ubl/knock.deny.v1".to_string();
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::Knock,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: knock_cid.to_string(),
@@ -636,8 +669,10 @@ impl UblPipeline {
                 vm_sig_payload_cid: None,
                 auth_token: String::new(),
                 duration_ms: 0,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt KNOCK(DENY): {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt KNOCK(DENY): {}", e)))?;
 
         if let Some(obj) = receipt.effects.as_object_mut() {
             obj.insert(
@@ -649,10 +684,12 @@ impl UblPipeline {
                 serde_json::Value::String(knock_cid.to_string()),
             );
         }
-        receipt.deny(reason);
+        let secrets = self.stage_secrets.read().await;
+        receipt.deny_with_secrets(reason, Some(&secrets.current));
 
-        receipt
-            .append_stage(StageExecution {
+        self.append_stage_receipt(
+            &mut receipt,
+            StageExecution {
                 stage: PipelineStage::WriteFinished,
                 timestamp: chrono::Utc::now().to_rfc3339(),
                 input_cid: knock_cid.to_string(),
@@ -663,10 +700,12 @@ impl UblPipeline {
                 vm_sig_payload_cid: None,
                 auth_token: String::new(),
                 duration_ms: 0,
-            })
-            .map_err(|e| PipelineError::Internal(format!("Receipt WF(KNOCK_DENY): {}", e)))?;
+            },
+        )
+        .await
+        .map_err(|e| PipelineError::Internal(format!("Receipt WF(KNOCK_DENY): {}", e)))?;
         receipt
-            .finalize_and_sign(&self.signing_key, CryptoMode::from_env())
+            .finalize_and_sign(&self.signing_key, self.pipeline_config.crypto_mode)
             .map_err(|e| PipelineError::SignError(format!("WF(KNOCK_DENY) sign failed: {}", e)))?;
 
         let receipt_json = receipt.to_json().unwrap_or_default();

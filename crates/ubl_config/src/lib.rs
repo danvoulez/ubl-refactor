@@ -427,7 +427,7 @@ impl AppConfig {
 
     pub fn to_redacted_log(&self) -> String {
         format!(
-            "gate(bind={},data_dir={}) storage(backend={},dsn_set={},idempotency_dsn_set={},outbox_dsn_set={},eventstore_enabled={},eventstore_path={}) {}",
+            "gate(bind={},data_dir={}) storage(backend={},dsn_set={},idempotency_dsn_set={},outbox_dsn_set={},eventstore_enabled={},eventstore_path={}) crypto(mode={}) {}",
             self.gate.bind,
             self.gate.data_dir,
             self.storage.backend,
@@ -436,6 +436,7 @@ impl AppConfig {
             self.storage.outbox_dsn.is_some(),
             self.storage.eventstore_enabled,
             self.storage.eventstore_path,
+            self.crypto.crypto_mode,
             self.llm.to_redacted_log(),
         )
     }

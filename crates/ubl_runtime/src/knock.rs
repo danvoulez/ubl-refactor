@@ -22,13 +22,13 @@ pub const MAX_DEPTH: usize = 32;
 pub const MAX_ARRAY_LEN: usize = 10_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum F64ImportMode {
+pub enum F64ImportMode {
     Reject,
     Bnd,
 }
 
 impl F64ImportMode {
-    fn from_env() -> Self {
+    pub fn from_env() -> Self {
         match std::env::var("F64_IMPORT_MODE") {
             Ok(v) if v.eq_ignore_ascii_case("bnd") => Self::Bnd,
             _ => Self::Reject,
@@ -116,6 +116,20 @@ fn knock_parsed_with_options(value: &Value, require_unc1: bool) -> Result<(), Kn
 /// Full KNOCK: raw bytes → parse → structural validation.
 /// Returns the parsed Value on success.
 pub fn knock(bytes: &[u8]) -> Result<Value, KnockError> {
+    knock_with_options(
+        bytes,
+        std::env::var("REQUIRE_UNC1_NUMERIC")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false),
+        F64ImportMode::from_env(),
+    )
+}
+
+pub fn knock_with_options(
+    bytes: &[u8],
+    require_unc1_numeric: bool,
+    f64_import_mode: F64ImportMode,
+) -> Result<Value, KnockError> {
     knock_raw(bytes)?;
 
     // Parse JSON (also validates UTF-8 at serde level)
@@ -124,11 +138,11 @@ pub fn knock(bytes: &[u8]) -> Result<Value, KnockError> {
 
     value = ubl_nrf::normalize_for_input(&value).map_err(map_normalization_error)?;
 
-    if matches!(F64ImportMode::from_env(), F64ImportMode::Bnd) {
+    if matches!(f64_import_mode, F64ImportMode::Bnd) {
         normalize_f64_to_bnd(&mut value)?;
     }
 
-    knock_parsed(&value)?;
+    knock_parsed_with_options(&value, require_unc1_numeric)?;
 
     // Check for duplicate keys (requires re-scanning raw bytes)
     check_duplicate_keys(bytes)?;

@@ -68,10 +68,30 @@ pub enum CryptoMode {
 }
 
 impl CryptoMode {
+    pub fn parse(raw: &str) -> Result<Self, String> {
+        if raw.eq_ignore_ascii_case("compat_v1") {
+            Ok(Self::CompatV1)
+        } else if raw.eq_ignore_ascii_case("hash_first_v2") {
+            Ok(Self::HashFirstV2)
+        } else {
+            Err(format!(
+                "invalid crypto mode {:?}; expected compat_v1 or hash_first_v2",
+                raw
+            ))
+        }
+    }
+
     pub fn from_env() -> Self {
-        match std::env::var("UBL_CRYPTO_MODE") {
-            Ok(v) if v.eq_ignore_ascii_case("hash_first_v2") => Self::HashFirstV2,
-            _ => Self::CompatV1,
+        std::env::var("UBL_CRYPTO_MODE")
+            .ok()
+            .and_then(|v| Self::parse(&v).ok())
+            .unwrap_or(Self::CompatV1)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::CompatV1 => "compat_v1",
+            Self::HashFirstV2 => "hash_first_v2",
         }
     }
 
@@ -359,8 +379,23 @@ impl UnifiedReceipt {
     }
 
     /// Append a stage execution and recompute the receipt CID.
-    pub fn append_stage(&mut self, mut stage: StageExecution) -> Result<(), ReceiptError> {
-        let current_key = load_required_stage_secret_key()?;
+    pub fn append_stage(&mut self, stage: StageExecution) -> Result<(), ReceiptError> {
+        let current = std::env::var(STAGE_SECRET_ENV).map_err(|_| {
+            ReceiptError::AuthChainBroken(format!("missing required env var {}", STAGE_SECRET_ENV))
+        })?;
+        let prev = std::env::var(STAGE_SECRET_PREV_ENV).ok();
+        self.append_stage_with_secrets(&current, prev.as_deref(), stage)
+    }
+
+    pub fn append_stage_with_secrets(
+        &mut self,
+        current_secret: &str,
+        previous_secret: Option<&str>,
+        mut stage: StageExecution,
+    ) -> Result<(), ReceiptError> {
+        let current_key = key_from_secret_str(current_secret).map_err(|e| {
+            ReceiptError::AuthChainBroken(format!("invalid {} value: {}", STAGE_SECRET_ENV, e))
+        })?;
 
         // Compute auth token: HMAC-BLAKE3(secret, prev_cid || stage_name)
         let prev_cid = if self.receipt_cid.as_str().is_empty() {
@@ -380,7 +415,15 @@ impl UnifiedReceipt {
         self.id = self.receipt_cid.as_str().to_string();
 
         // Enforce auth-chain integrity after every append.
-        let previous_key = load_optional_stage_secret_key(STAGE_SECRET_PREV_ENV)?;
+        let previous_key = previous_secret
+            .map(key_from_secret_str)
+            .transpose()
+            .map_err(|e| {
+                ReceiptError::AuthChainBroken(format!(
+                    "invalid {} value: {}",
+                    STAGE_SECRET_PREV_ENV, e
+                ))
+            })?;
         if !self.verify_auth_chain_with_keys(&current_key, previous_key.as_ref())? {
             return Err(ReceiptError::AuthChainBroken(
                 "stage auth token mismatch after append".to_string(),
@@ -471,6 +514,11 @@ impl UnifiedReceipt {
 
     /// Mark the receipt as denied.
     pub fn deny(&mut self, reason: &str) {
+        let current = std::env::var(STAGE_SECRET_ENV).ok();
+        self.deny_with_secrets(reason, current.as_deref());
+    }
+
+    pub fn deny_with_secrets(&mut self, reason: &str, current_secret: Option<&str>) {
         self.decision = Decision::Deny;
         if let Some(obj) = self.effects.as_object_mut() {
             obj.insert(
@@ -481,13 +529,16 @@ impl UnifiedReceipt {
         // Decision/effects are mutable across the pipeline. Rebuild prior stage
         // auth tokens against the new state so the chain remains internally
         // consistent before appending the WF stage.
-        self.rebuild_auth_chain_with_current_key();
+        self.rebuild_auth_chain_with_current_key(current_secret);
         let _ = self.recompute_cid();
         self.id = self.receipt_cid.as_str().to_string();
     }
 
-    fn rebuild_auth_chain_with_current_key(&mut self) {
-        let Ok(current_key) = load_required_stage_secret_key() else {
+    fn rebuild_auth_chain_with_current_key(&mut self, current_secret: Option<&str>) {
+        let Some(current_secret) = current_secret else {
+            return;
+        };
+        let Ok(current_key) = key_from_secret_str(current_secret) else {
             return;
         };
         if self.stages.is_empty() {
@@ -545,6 +596,23 @@ impl UnifiedReceipt {
             Err(_) => return false,
         };
 
+        self.verify_auth_chain_with_keys(&current_key, previous_key.as_ref())
+            .unwrap_or(false)
+    }
+
+    pub fn verify_auth_chain_with_secrets(
+        &self,
+        current_secret: &str,
+        previous_secret: Option<&str>,
+    ) -> bool {
+        let current_key = match key_from_secret_str(current_secret) {
+            Ok(k) => k,
+            Err(_) => return false,
+        };
+        let previous_key = match previous_secret.map(key_from_secret_str).transpose() {
+            Ok(k) => k,
+            Err(_) => return false,
+        };
         self.verify_auth_chain_with_keys(&current_key, previous_key.as_ref())
             .unwrap_or(false)
     }
