@@ -1,7 +1,7 @@
 # Global fallback
-* @maintainers
+* @REPLACE_ME
 
-/crates/ @maintainers
-/services/ @maintainers
-/ops/ @maintainers
-/docs/ @maintainers
+/crates/ @REPLACE_ME
+/services/ @REPLACE_ME
+/ops/ @REPLACE_ME
+/docs/ @REPLACE_ME
