@@ -2,6 +2,10 @@
 
 Describe the behavior change in one paragraph.
 
+> **Required PR body headers for CI:** Include the exact section names
+> `RED-FIRST EVIDENCE`, `GREEN EVIDENCE`, and `CONFORMANCE` somewhere in the
+> PR description body. CI validates these strings for behavior-changing work.
+
 ## Contract Impact
 
 - [ ] No external behavior change
@@ -35,7 +39,7 @@ Paste command(s) and output snippet showing passing state after implementation.
 # passing output snippet
 ```
 
-## Conformance
+## CONFORMANCE
 
 - [ ] `scripts/conformance_suite.sh` was run (or CI conformance passed)
 - [ ] Any changed contract surface is covered by conformance vectors/rules
