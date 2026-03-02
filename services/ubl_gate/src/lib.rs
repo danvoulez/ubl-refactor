@@ -264,6 +264,8 @@ pub async fn run(config: ubl_config::AppConfig) -> Result<(), Box<dyn std::error
         release_commit: config.build.release_commit.clone(),
         gate_binary_sha256: config.build.gate_binary_sha256.clone(),
         write_access_policy,
+        llm: config.llm.clone(),
+        crypto_mode: config.crypto.crypto_mode.clone(),
     };
 
     let app = build_router(state);
@@ -421,6 +423,8 @@ mod tests {
             release_commit: Some("test-commit".to_string()),
             gate_binary_sha256: Some("b3:test-runtime-hash".to_string()),
             write_access_policy: Arc::new(WriteAccessPolicy::open_for_tests()),
+            llm: ubl_config::LlmConfig::default(),
+            crypto_mode: "compat_v1".to_string(),
         }
     }
 

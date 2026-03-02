@@ -13,7 +13,7 @@ use ubl_runtime::rate_limit::CanonRateLimiter;
 use ubl_runtime::UblPipeline;
 
 use crate::utils::extract_api_key;
-use ubl_config::GateWritePolicyConfig;
+use ubl_config::{GateWritePolicyConfig, LlmConfig};
 
 #[derive(Clone)]
 pub(crate) struct AppState {
@@ -32,6 +32,8 @@ pub(crate) struct AppState {
     pub release_commit: Option<String>,
     pub gate_binary_sha256: Option<String>,
     pub write_access_policy: Arc<WriteAccessPolicy>,
+    pub llm: LlmConfig,
+    pub crypto_mode: String,
 }
 
 #[derive(Clone)]

@@ -285,10 +285,7 @@ pub(crate) async fn submit_chip_bytes(
             let ubl_err = UblError::from_pipeline_error(&e);
             match ubl_err.code {
                 ErrorCode::SignError | ErrorCode::InvalidSignature => {
-                    let mode = std::env::var_os("UBL_CRYPTO_MODE")
-                        .map(|v| v.to_string_lossy().to_string())
-                        .unwrap_or_else(|| "compat_v1".to_string());
-                    metrics::inc_crypto_verify_fail("pipeline", &mode);
+                    metrics::inc_crypto_verify_fail("pipeline", &state.crypto_mode);
                 }
                 ErrorCode::CanonError => metrics::inc_canon_divergence("pipeline"),
                 _ => {}

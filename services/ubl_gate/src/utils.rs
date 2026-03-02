@@ -16,13 +16,7 @@ use crate::state::{AppState, McpWsAuth};
 
 // ── Tracing ──────────────────────────────────────────────────────────────────
 
-pub fn init_tracing(default_rust_log: &str) {
-    let rust_log = std::env::var_os("RUST_LOG")
-        .map(|v| v.to_string_lossy().to_string())
-        .map(|v| v.trim().to_string())
-        .filter(|v| !v.is_empty())
-        .unwrap_or_else(|| default_rust_log.to_string());
-
+pub fn init_tracing(rust_log: &str) {
     let _ = tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::new(rust_log))
         .with_target(false)

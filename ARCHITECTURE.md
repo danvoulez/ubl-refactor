@@ -3,7 +3,7 @@
 **Status**: Active normative architecture document
 **Date**: February 20, 2026 (rev 4)
 **Implementation status source**: `TASKLIST.md`
-**Documentation index**: `docs/INDEX.md`
+**Documentation index**: `docs/index.md`
 
 > **Universal Business Leverage** leverages the best of determinism with the best of the stochasticism of LLMs — both comfortable and at maximum potential, with limits expressed by clear rules.
 

@@ -432,7 +432,7 @@ pub(crate) async fn narrate_receipt(
         chip.chip_type, decision, latency_ms, fuel, policy_count
     );
 
-    let summary = if llm_is_enabled() {
+    let summary = if llm_is_enabled(&state) {
         let llm_ctx = serde_json::json!({
             "chip_type": chip.chip_type,
             "chip_body": chip.chip_data,
@@ -442,7 +442,7 @@ pub(crate) async fn narrate_receipt(
             "policy_count": policy_count,
             "world": world,
         });
-        match call_real_llm(&state.http_client, "receipt", &llm_ctx).await {
+        match call_real_llm(&state, "receipt", &llm_ctx).await {
             Ok(text) => text,
             Err(_) => base_summary.clone(),
         }
@@ -546,7 +546,7 @@ pub(crate) async fn narrate_receipt_stream(
     let fuel = chip.execution_metadata.fuel_consumed;
     let decision = "allow";
 
-    if !llm_is_enabled() {
+    if !llm_is_enabled(&state) {
         let summary = format!(
             "{} processed as {} in {}ms (fuel {}, policies {}).",
             chip.chip_type, decision, latency_ms, fuel, policy_count
@@ -574,5 +574,5 @@ pub(crate) async fn narrate_receipt_stream(
         "world": world,
     });
 
-    call_real_llm_stream_sse(state.http_client.clone(), "receipt".to_string(), context).await
+    call_real_llm_stream_sse(state, "receipt".to_string(), context).await
 }
