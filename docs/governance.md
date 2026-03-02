@@ -1,13 +1,17 @@
 # Governance
 
+## Stewardship
+
+UBL-CORE is stewarded by the LogLine Foundation organization.
+
 ## Decision making
 
 - Significant technical changes should go through RFCs/ADRs.
-- Maintainers review and approve proposals based on impact and evidence.
+- Organization maintainers review and approve proposals based on impact and evidence.
 
 ## Issue and PR triage
 
-- New issues are triaged by maintainers on a best-effort basis.
+- New issues are triaged by organization maintainers on a best-effort basis.
 - Security and release-blocking bugs are prioritized.
 
 ## Service expectations

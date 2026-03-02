@@ -4,9 +4,10 @@ message: "If you use this project, please cite it as below."
 type: software
 version: 0.1.0
 license: Apache-2.0
-url: https://github.com/danvoulez/ubl-refactor
+url: https://github.com/LogLine-Foundation/UBL-CORE
 authors:
-  - name: The LogLine Foundation
+  - name: LogLine Foundation
 contact:
-  - name: Security Contact
-    email: see SECURITY.md
+  - name: LogLine Foundation Security
+    email: security@logline.foundation
+repository-code: https://github.com/LogLine-Foundation/UBL-CORE
