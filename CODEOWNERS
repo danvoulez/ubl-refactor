@@ -1,0 +1,7 @@
+# Global fallback
+* @maintainers
+
+/crates/ @maintainers
+/services/ @maintainers
+/ops/ @maintainers
+/docs/ @maintainers
