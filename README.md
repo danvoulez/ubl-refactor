@@ -1,12 +1,12 @@
 # UBL-CORE
 
 <!-- Badges / “tags” -->
-[![CI](https://img.shields.io/github/actions/workflow/status/LogLine-Foundation/UBL-CORE/ci.yml?branch=main&label=CI&logo=github)](https://github.com/LogLine-Foundation/UBL-CORE/actions)
-[![Conformance](https://img.shields.io/github/actions/workflow/status/LogLine-Foundation/UBL-CORE/conformance.yml?branch=main&label=Conformance&logo=wasmer)](https://github.com/LogLine-Foundation/UBL-CORE/actions)
-[![License](https://img.shields.io/github/license/LogLine-Foundation/UBL-CORE?label=License)](./LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/LogLine-Foundation/ubl-refactor/ci.yml?branch=main&label=CI&logo=github)](https://github.com/LogLine-Foundation/ubl-refactor/actions)
+[![Conformance](https://img.shields.io/github/actions/workflow/status/LogLine-Foundation/ubl-refactor/conformance.yml?branch=main&label=Conformance&logo=wasmer)](https://github.com/LogLine-Foundation/ubl-refactor/actions)
+[![License](https://img.shields.io/github/license/LogLine-Foundation/ubl-refactor?label=License)](./LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.90.x-000000?logo=rust)](./rust-toolchain.toml)
-[![Release](https://img.shields.io/github/v/release/LogLine-Foundation/UBL-CORE?label=Release)](https://github.com/LogLine-Foundation/UBL-CORE/releases)
-[![Issues](https://img.shields.io/github/issues/LogLine-Foundation/UBL-CORE?label=Issues)](https://github.com/LogLine-Foundation/UBL-CORE/issues)
+[![Release](https://img.shields.io/github/v/release/LogLine-Foundation/ubl-refactor?label=Release)](https://github.com/LogLine-Foundation/ubl-refactor/releases)
+[![Issues](https://img.shields.io/github/issues/LogLine-Foundation/ubl-refactor?label=Issues)](https://github.com/LogLine-Foundation/ubl-refactor/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./docs/contributing.md)
 [![Security](https://img.shields.io/badge/Security-security%40logline.foundation-blue)](./SECURITY.md)
 

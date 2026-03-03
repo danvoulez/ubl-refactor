@@ -33,4 +33,4 @@ The test loader resolves vectors from:
 
 ## Schema
 
-If a `VECTOR_SCHEMA_V1.json` file is present in this directory, vectors should conform to it.
+Vectors **must** conform to `VECTOR_SCHEMA_V1.json` in this directory. Validate with `bash scripts/wasm_conformance.sh --mode contract`.

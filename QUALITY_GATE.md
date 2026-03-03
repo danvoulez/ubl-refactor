@@ -33,7 +33,7 @@ This is the release and merge gate policy for UBL-CORE.
 3. G2 Release Readiness
 - All `G1` green on target commit.
 - Evidence artifacts captured and retained.
-- Release governance checklist green (`docs/lifecycle/RELEASE_READINESS.md`).
+- Release governance checklist green (`docs/release/checklist.md`).
 
 ## Mandatory Evidence
 

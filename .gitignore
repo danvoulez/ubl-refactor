@@ -30,6 +30,7 @@ sled_data/
 release-artifacts/
 artifacts/conformance/
 artifacts/contract/
+artifacts/readiness
 # Local operational reports
 data/rollout_report.json
 # Local source-flow secrets

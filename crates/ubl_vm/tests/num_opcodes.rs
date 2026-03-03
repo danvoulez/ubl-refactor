@@ -1,9 +1,9 @@
-use rb_vm::canon::NaiveCanon;
-use rb_vm::exec::{CasProvider, SignProvider};
-use rb_vm::tlv;
-use rb_vm::{Cid, ExecError, Vm, VmConfig};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use ubl_vm::canon::NaiveCanon;
+use ubl_vm::exec::{CasProvider, SignProvider};
+use ubl_vm::tlv;
+use ubl_vm::{Cid, ExecError, Vm, VmConfig};
 
 struct SharedCas {
     store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
@@ -50,7 +50,7 @@ fn tlv_instr(op: u8, payload: &[u8]) -> Vec<u8> {
     out
 }
 
-fn run(code: Vec<u8>) -> Result<(rb_vm::exec::VmOutcome, serde_json::Value), ExecError> {
+fn run(code: Vec<u8>) -> Result<(ubl_vm::exec::VmOutcome, serde_json::Value), ExecError> {
     let instructions = tlv::decode_stream(&code).expect("valid tlv");
     let store = Arc::new(Mutex::new(HashMap::new()));
     let cas = SharedCas::new(store.clone());

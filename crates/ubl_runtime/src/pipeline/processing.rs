@@ -481,7 +481,7 @@ impl UblPipeline {
         // For `ubl/key.rotate`, mapping persistence is fail-closed.
         if let Some(ref store) = self.chip_store {
             let metadata = ExecutionMetadata {
-                runtime_version: "rb_vm/0.1".to_string(),
+                runtime_version: "ubl_vm/0.1".to_string(),
                 execution_time_ms: total_ms,
                 fuel_consumed: self.fuel_limit,
                 policies_applied: check.trace.iter().map(|t| t.policy_id.clone()).collect(),

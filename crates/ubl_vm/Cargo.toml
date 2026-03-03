@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "UBL VM: deterministic stack VM for UBL CORE"
-repository = "https://github.com/LogLine-Foundation/UBL-CORE"
+repository = "https://github.com/LogLine-Foundation/ubl-refactor"
 
 [dependencies]
 ed25519-dalek = { version = "2", features = ["rand_core"] }

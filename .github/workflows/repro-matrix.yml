@@ -40,7 +40,7 @@ jobs:
             repro-${{ runner.os }}-
 
       - name: NRF Golden Vectors
-        run: cargo test -p ubl_ai_nrf1 --test rho_vectors
+        run: cargo test -p ubl_nrf --test rho_vectors
 
       - name: Canon Guardrails
         run: cargo test -p ubl_runtime --test canon_guardrails

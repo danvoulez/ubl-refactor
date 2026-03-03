@@ -11,7 +11,7 @@
 //!   `ubl/silicon.bit`     — semantic transistor (atomic policy decision)
 //!   `ubl/silicon.circuit` — semantic IC (wired graph of bits)
 //!   `ubl/silicon.chip`    — full TDLN-chip (composed circuits + HAL profile)
-//!   `ubl/silicon.compile` — compilation request → rb_vm TLV bytecode
+//!   `ubl/silicon.compile` — compilation request → ubl_vm TLV bytecode
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -429,7 +429,7 @@ impl SiliconCircuitBody {
 pub struct HalProfile {
     /// e.g. "HAL/v0/cpu" | "HAL/v0/cpu-gpu"
     pub profile: String,
-    /// Execution backends: ["rb_vm/v1", "wasm32", "verilog@*"]
+    /// Execution backends: ["ubl_vm/v1", "wasm32", "verilog@*"]
     pub targets: Vec<String>,
     pub deterministic: bool,
     pub timebase_ns: Option<u64>,
@@ -484,7 +484,7 @@ impl HalProfile {
 ///   "id": "CHIP_PaymentProcessor",
 ///   "name": "Payment Processor v1",
 ///   "circuits": ["b3:<cid-of-C_PaymentAuth>"],
-///   "hal": {"profile": "HAL/v0/cpu", "targets": ["rb_vm/v1"], "deterministic": true},
+///   "hal": {"profile": "HAL/v0/cpu", "targets": ["ubl_vm/v1"], "deterministic": true},
 ///   "version": "1.0"
 /// }
 /// ```
@@ -502,21 +502,21 @@ pub struct SiliconChipBody {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompileTarget {
-    /// rb_vm TLV bytecode (the only supported target in Phase 1).
-    RbVm,
+    /// ubl_vm TLV bytecode (the only supported target in Phase 1).
+    UblVm,
 }
 
 impl CompileTarget {
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
-            "rb_vm" | "rb_vm/v1" | "rbvm" => Some(Self::RbVm),
+            "ubl_vm" | "ubl_vm/v1" => Some(Self::UblVm),
             _ => None,
         }
     }
 
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::RbVm => "rb_vm/v1",
+            Self::UblVm => "ubl_vm/v1",
         }
     }
 }
@@ -528,7 +528,7 @@ impl CompileTarget {
 /// ```json
 /// {
 ///   "chip_cid": "b3:<cid-of-CHIP_PaymentProcessor>",
-///   "target": "rb_vm"
+///   "target": "ubl_vm"
 /// }
 /// ```
 #[derive(Debug, Clone)]
@@ -694,7 +694,7 @@ fn parse_compile(body: &Value) -> Result<SiliconCompileBody, SiliconError> {
     let target_str = body
         .get("target")
         .and_then(Value::as_str)
-        .unwrap_or("rb_vm");
+        .unwrap_or("ubl_vm");
     let target = CompileTarget::parse(target_str)
         .ok_or_else(|| SiliconError::UnsupportedTarget(target_str.to_string()))?;
     Ok(SiliconCompileBody { chip_cid, target })
@@ -896,7 +896,7 @@ fn resolve_chip_graph_inner<'a>(
     }) // end Box::pin
 }
 
-/// Compile a silicon chip graph to rb_vm TLV bytecode.
+/// Compile a silicon chip graph to ubl_vm TLV bytecode.
 ///
 /// Phase 1 scope (linear execution only, no JMP):
 ///   - Always(true)               → ConstI64(1) + AssertTrue
@@ -907,7 +907,7 @@ fn resolve_chip_graph_inner<'a>(
 ///   - Closes with EmitRc
 ///
 /// Or / Any / Parallel / KofN → returns CompileError (Phase 2, requires JMP).
-/// Compile a silicon chip graph to rb_vm TLV bytecode.
+/// Compile a silicon chip graph to ubl_vm TLV bytecode.
 ///
 /// Phase 2 supports all composition modes:
 ///   Sequential/All  — each bit inline-asserts (short-circuit on DENY)
@@ -924,7 +924,7 @@ fn resolve_chip_graph_inner<'a>(
 ///   ContextHas                → JsonHasKey
 ///   BodySizeLte               → PushBodySize + ConstI64 + CmpI64(LE)
 ///   Or / Not / And (nested)   → BoolOr / BoolNot / BoolAnd on Bool stack
-pub fn compile_chip_to_rb_vm(circuits: &[ResolvedCircuit]) -> Result<Vec<u8>, SiliconError> {
+pub fn compile_chip_to_ubl_vm(circuits: &[ResolvedCircuit]) -> Result<Vec<u8>, SiliconError> {
     let mut code: Vec<u8> = Vec::new();
     compile_circuits_inner(circuits, &mut code)?;
     // Terminate: PushInput(0) + EmitRc (outermost level only).
@@ -1215,7 +1215,7 @@ fn emit_node_as_bool(
 
 // ── gate_compile ──────────────────────────────────────────────────────────────
 
-/// Load a `ubl/silicon.chip` from ChipStore and compile it to rb_vm TLV bytecode.
+/// Load a `ubl/silicon.chip` from ChipStore and compile it to ubl_vm TLV bytecode.
 ///
 /// Used by the `@silicon_gate` live enforcement at CHECK stage.
 /// The returned bytecode, when run with the incoming chip body NRF-encoded as
@@ -1245,7 +1245,7 @@ pub async fn gate_compile(
     let circuits = resolve_chip_graph(&chip_body, chip_store).await?;
 
     // Compile to TLV bytecode (deterministic).
-    compile_chip_to_rb_vm(&circuits)
+    compile_chip_to_ubl_vm(&circuits)
 }
 
 // ── compile_to_bool ────────────────────────────────────────────────────────────
@@ -1569,7 +1569,7 @@ mod tests {
             "circuits": ["b3:cccc"],
             "hal": {
                 "profile": "HAL/v0/cpu",
-                "targets": ["rb_vm/v1"],
+                "targets": ["ubl_vm/v1"],
                 "deterministic": true
             },
             "version": "1.0"
@@ -1598,11 +1598,11 @@ mod tests {
     fn parse_compile_valid() {
         let body = json!({
             "chip_cid": "b3:dddd",
-            "target": "rb_vm"
+            "target": "ubl_vm"
         });
         let compile = parse_compile(&body).unwrap();
         assert_eq!(compile.chip_cid, "b3:dddd");
-        assert_eq!(compile.target, CompileTarget::RbVm);
+        assert_eq!(compile.target, CompileTarget::UblVm);
     }
 
     #[test]
@@ -1619,13 +1619,13 @@ mod tests {
     fn parse_compile_bad_cid_errors() {
         let body = json!({
             "chip_cid": "sha256:not-blake3",
-            "target": "rb_vm"
+            "target": "ubl_vm"
         });
         let err = parse_compile(&body).unwrap_err();
         assert!(err.to_string().contains("CID"));
     }
 
-    // ── compile_chip_to_rb_vm ──────────────────────────────────────────────────
+    // ── compile_chip_to_ubl_vm ──────────────────────────────────────────────────
 
     #[test]
     fn compile_always_true_produces_bytecode() {
@@ -1651,7 +1651,7 @@ mod tests {
                 body: bit,
             })],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
         // Should contain ConstI64(1) + AssertTrue + PushInput(0) + EmitRc
         assert!(bytecode.len() >= 4 * 3); // at minimum 4 TLV instructions × 3 bytes each
@@ -1681,7 +1681,7 @@ mod tests {
                 body: bit,
             })],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
     }
 
@@ -1710,7 +1710,7 @@ mod tests {
                 body: bit,
             })],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
         // Must end with EmitRc (0x10)
         assert!(bytecode.windows(3).any(|w| w[0] == 0x10));
@@ -1812,7 +1812,7 @@ mod tests {
             "id": "CHIP_inner",
             "name": "Inner Chip",
             "circuits": [inner_circuit_cid],
-            "hal": {"profile": "HAL/v0/cpu", "targets": ["rb_vm/v1"], "deterministic": true},
+            "hal": {"profile": "HAL/v0/cpu", "targets": ["ubl_vm/v1"], "deterministic": true},
             "version": "1.0"
         });
         let inner_chip_cid = store
@@ -1861,7 +1861,7 @@ mod tests {
             "id": "CHIP_outer",
             "name": "Outer Chip",
             "circuits": [outer_circuit_cid],
-            "hal": {"profile": "HAL/v0/cpu", "targets": ["rb_vm/v1"], "deterministic": true},
+            "hal": {"profile": "HAL/v0/cpu", "targets": ["ubl_vm/v1"], "deterministic": true},
             "version": "1.0"
         });
         let outer_chip_cid = store
@@ -1941,7 +1941,7 @@ mod tests {
             "id": "CHIP_Gate",
             "name": "Gate Chip",
             "circuits": [circuit_cid],
-            "hal": {"profile": "HAL/v0/cpu", "targets": ["rb_vm/v1"], "deterministic": true},
+            "hal": {"profile": "HAL/v0/cpu", "targets": ["ubl_vm/v1"], "deterministic": true},
             "version": "1.0"
         });
         let chip_cid = store
@@ -2084,7 +2084,7 @@ mod tests {
                 body: bit,
             })],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
         // Must contain JsonGetKey (0x13) for the "amount" field
         assert!(
@@ -2133,7 +2133,7 @@ mod tests {
                 body: bit,
             })],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
         // Must contain PushTimestamp (0x2C)
         assert!(
@@ -2194,7 +2194,7 @@ mod tests {
                 }),
             ],
         };
-        let bytecode = compile_chip_to_rb_vm(&[circuit]).unwrap();
+        let bytecode = compile_chip_to_ubl_vm(&[circuit]).unwrap();
         assert!(!bytecode.is_empty());
 
         // Bytecode must contain both AmountLte opcodes (0x13=JsonGetKey, 0x08=CmpI64)

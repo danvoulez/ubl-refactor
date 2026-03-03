@@ -183,7 +183,7 @@ enum CapCommands {
 
 #[derive(Subcommand)]
 enum SiliconCommands {
-    /// Compile a silicon chip JSON to rb_vm TLV bytecode.
+    /// Compile a silicon chip JSON to ubl_vm TLV bytecode.
     ///
     /// Reads a self-contained silicon chip bundle (a JSON file with embedded
     /// bit/circuit/chip definitions) and outputs:
@@ -213,7 +213,7 @@ enum SiliconCommands {
         #[arg(long)]
         hex_only: bool,
     },
-    /// Disassemble silicon-compiled rb_vm TLV bytecode to human-readable listing.
+    /// Disassemble silicon-compiled ubl_vm TLV bytecode to human-readable listing.
     ///
     /// Accepts either a hex string or a binary bytecode file.
     Disasm {
@@ -810,7 +810,7 @@ fn cmd_disasm(input: &str, is_hex: bool) -> Result<(), Box<dyn std::error::Error
 //   1. Stores all bits → records bundle_cid → stored_cid mapping.
 //   2. Rewrites each circuit's "bits" array with stored CIDs, stores circuits.
 //   3. Rewrites the chip's "circuits" array with stored CIDs, stores chip.
-//   4. Resolves the chip graph and compiles to rb_vm TLV bytecode.
+//   4. Resolves the chip graph and compiles to ubl_vm TLV bytecode.
 //   5. Prints chip CID, bytecode CID, hex bytecode, and disassembly.
 
 async fn cmd_silicon_compile(
@@ -823,8 +823,8 @@ async fn cmd_silicon_compile(
     use std::sync::Arc;
     use ubl_chipstore::{ChipStore, ExecutionMetadata, InMemoryBackend, SledBackend};
     use ubl_runtime::silicon_chip::{
-        compile_chip_to_rb_vm, parse_silicon, resolve_chip_graph, SiliconRequest, TYPE_SILICON_BIT,
-        TYPE_SILICON_CHIP, TYPE_SILICON_CIRCUIT,
+        compile_chip_to_ubl_vm, parse_silicon, resolve_chip_graph, SiliconRequest,
+        TYPE_SILICON_BIT, TYPE_SILICON_CHIP, TYPE_SILICON_CIRCUIT,
     };
     use ubl_types::Did as TypedDid;
 
@@ -852,7 +852,7 @@ async fn cmd_silicon_compile(
         };
 
         let circuits = resolve_chip_graph(&chip, &store).await?;
-        let bytecode = compile_chip_to_rb_vm(&circuits)?;
+        let bytecode = compile_chip_to_ubl_vm(&circuits)?;
 
         let bc_hash = blake3::hash(&bytecode);
         let bc_cid = format!("b3:{}", hex::encode(bc_hash.as_bytes()));
@@ -1028,7 +1028,7 @@ async fn cmd_silicon_compile(
         _ => return Err("chip body did not parse as ubl/silicon.chip".into()),
     };
     let circuits = resolve_chip_graph(&chip, &store).await?;
-    let bytecode = compile_chip_to_rb_vm(&circuits)?;
+    let bytecode = compile_chip_to_ubl_vm(&circuits)?;
 
     // ── 5. Output ────────────────────────────────────────────────
     let bc_hash = blake3::hash(&bytecode);

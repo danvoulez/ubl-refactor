@@ -1,51 +1,19 @@
-# RB-VM MVP (Fractal)
+# ubl_vm
 
-Este pacote contém:
-- `spec/DECISIONS.md` e `spec/LAWS.md`
-- Fixtures de Leis em `tests/laws/*`
-- Exemplo `deny_age` com `chip.tlv`, `chip.asm`, `inputs.json`
+Deterministic VM for UBL transition execution.
 
-## Formato TLV
-- Opcode: u8
-- Len: u16 (big-endian)
-- Payload: [len] bytes
+## What is in this crate
 
-### Opcodes (MVP)
-- 0x01 ConstI64
-- 0x02 ConstBytes
-- 0x03 JsonNormalize
-- 0x04 JsonValidate
-- 0x05 AddI64
-- 0x06 SubI64
-- 0x07 MulI64
-- 0x08 CmpI64
-- 0x09 AssertTrue
-- 0x0A HashBlake3
-- 0x0B CasPut
-- 0x0C CasGet
-- 0x0D SetRcBody
-- 0x0E AttachProof
-- 0x0F SignDefault
-- 0x10 EmitRc
-- 0x11 Drop
-- 0x12 PushInput
-- 0x13 JsonGetKey
-- 0x14 Dup
-- 0x15 Swap
-- 0x16 VerifySig
-- 0x17 NumFromDecimalStr
-- 0x18 NumFromF64Bits
-- 0x19 NumAdd
-- 0x1A NumSub
-- 0x1B NumMul
-- 0x1C NumDiv
-- 0x1D NumToDec
-- 0x1E NumToRat
-- 0x1F NumWithUnit
-- 0x20 NumAssertUnit
-- 0x21 NumCompare
+- VM executor and fuel accounting in `src/exec.rs`
+- TLV opcode encoding/decoding in `src/tlv.rs` and `src/opcode.rs`
+- Canon helpers in `src/canon.rs`
+- Runtime providers in `src/providers/`
 
-## Próximos passos
-- Implementar executor em `crates/rb_vm`
-- Ligar `--engine=rb` no `ubl-runtime`
-- Preencher goldens de `expected.rc.cid` após implementação
+## Tests and fixtures
+
+- Law and property tests in `tests/`
+- Canon/receipt vectors and regression tests in `tests/rho_contract_vectors.rs`, `tests/laws.rs`, and `tests/prop_vm.rs`
+
+## Usage
+
+This crate is consumed by `ubl_runtime` in the TR stage and by `ubl_cli` silicon compile/disasm flows.

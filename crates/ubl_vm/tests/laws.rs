@@ -11,12 +11,12 @@
 //! Law 9: Verifiable signature via DID
 //! Law 10: Mandatory narrative on critical denies
 
-use rb_vm::{
+use std::collections::HashMap;
+use ubl_vm::{
     canon::NaiveCanon,
     exec::{CasProvider, SignProvider},
     tlv, Cid, ExecError, Vm, VmConfig, VmOutcome,
 };
-use std::collections::HashMap;
 
 // ── In-memory CAS (deterministic, no filesystem) ─────────────────
 

@@ -1436,7 +1436,7 @@ fi
 # shellcheck disable=SC1090
 set -a && source "$ENV_FILE" && set +a
 
-UBL_REPO="${UBL_REPO:-LogLine-Foundation/UBL-CORE}"
+UBL_REPO="${UBL_REPO:-LogLine-Foundation/ubl-refactor}"
 UBL_RELEASE_TAG="${UBL_RELEASE_TAG:-v0.1.0-core-baseline}"
 UBL_BASE_DIR="${UBL_BASE_DIR:-$HOME/ubl-core-forever}"
 LEGACY_UBL_DOMAIN="${UBL_DOMAIN:-}"

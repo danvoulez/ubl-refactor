@@ -17,7 +17,7 @@ pub enum TrBytecodeProfile {
     NumericV1,
     /// Silicon bit/circuit/chip: passthrough + store definition in CAS.
     SiliconDefinitionV1,
-    /// Silicon compile: full compilation to rb_vm bytecode.
+    /// Silicon compile: full compilation to ubl_vm bytecode.
     SiliconCompileV1,
 }
 

@@ -10,7 +10,7 @@ Após a extração de `ubl_vm` e `ubl_nrf` como crates reais, ainda existe depen
 Manter os shims legados como compatibilidade temporária.
 
 ### Compat/shim deprecated
-- `rb_vm` e `ubl_ai_nrf1` são legados.
+- `ubl_vm` e `ubl_nrf` são legados.
 - Novo código deve depender de `ubl_vm` e `ubl_nrf`.
 - Remoção dos shims depende de migração completa da suíte e consumidores.
 
