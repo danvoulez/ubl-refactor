@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation hub
-    url: https://github.com/LogLine-Foundation/UBL-CORE/blob/main/docs/index.md
+    url: https://github.com/LogLine-Foundation/ubl-refactor/blob/main/docs/index.md
     about: Start with project documentation.
   - name: Security policy
-    url: https://github.com/LogLine-Foundation/UBL-CORE/blob/main/SECURITY.md
+    url: https://github.com/LogLine-Foundation/ubl-refactor/blob/main/SECURITY.md
     about: Report vulnerabilities privately.

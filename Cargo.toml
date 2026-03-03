@@ -1,10 +1,8 @@
 [workspace]
 members = [
-  "crates/ubl_ai_nrf1",
   "crates/ubl_nrf",
   "crates/ubl_canon",
   "crates/ubl_eventstore",
-  "crates/rb_vm",
   "crates/ubl_vm",
   "crates/ubl_runtime",
   "crates/ubl_receipt",
@@ -25,7 +23,7 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 authors = ["UBL Contributors"]
-repository = "https://github.com/LogLine-Foundation/UBL-CORE"
+repository = "https://github.com/LogLine-Foundation/ubl-refactor"
 
 [workspace.dependencies]
 # Internal crates

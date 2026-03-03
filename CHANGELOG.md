@@ -18,5 +18,5 @@ All notable changes to this project are documented in this file.
 ### Added
 - Initial public-ready baseline metadata and community health files.
 
-[Unreleased]: https://github.com/LogLine-Foundation/UBL-CORE/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/LogLine-Foundation/UBL-CORE/releases/tag/v0.1.0
+[Unreleased]: https://github.com/LogLine-Foundation/ubl-refactor/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/LogLine-Foundation/ubl-refactor/releases/tag/v0.1.0

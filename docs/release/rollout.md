@@ -30,4 +30,4 @@ Ativar e evoluir política exclusivamente por chips/receipts no próprio UBL, se
 
 ## Referência operacional
 
-- `docs/ops/ROLLOUT_AUTOMATION.md`
+- `docs/operations/rollout-automation.md`

@@ -67,6 +67,11 @@ jobs:
             ${{ runner.os }}-${{ steps.toolchain.outputs.rustc_hash }}-
             ${{ runner.os }}-
 
+      - name: Repo Sweep
+        run: |
+          chmod +x scripts/repo_sweep.sh
+          scripts/repo_sweep.sh
+
       - name: Format Check
         run: cargo fmt --all -- --check
 

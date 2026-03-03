@@ -14,7 +14,7 @@ Options:
   -h, --help               Show this help
 
 Profiles:
-  strict  Excludes product/specialization track (docs/visao, vcx script)
+  strict  Excludes product/specialization track (deprecated product docs, vcx script)
   max     Copies almost everything except VCS/build artifacts
 EOF
 }
@@ -109,8 +109,7 @@ EXCLUDES=(
 
 if [[ "$PROFILE" == "strict" ]]; then
   EXCLUDES+=(
-    --exclude "docs/visao/"
-    --exclude "scripts/vcx_conformance.sh"
+        --exclude "scripts/vcx_conformance.sh"
   )
 fi
 

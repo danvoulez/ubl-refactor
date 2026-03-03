@@ -81,9 +81,9 @@ GIT_SHA="$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 RULES=$(
   cat <<'EOF'
 CONFORM-001|KNOCK vector matrix|cargo test -p ubl_runtime --test knock_vector_matrix
-CONFORM-002|Rho contract vectors|cargo test -p rb_vm --test rho_contract_vectors
-CONFORM-003|NRF rho vectors|cargo test -p ubl_ai_nrf1 --test rho_vectors
-CONFORM-004|NRF golden vectors|cargo test -p ubl_ai_nrf1 --test golden_vectors
+CONFORM-002|Rho contract vectors|cargo test -p ubl_vm --test rho_contract_vectors
+CONFORM-003|NRF rho vectors|cargo test -p ubl_nrf --test rho_vectors
+CONFORM-004|NRF golden vectors|cargo test -p ubl_nrf --test golden_vectors
 CONFORM-005|Canon guardrails|cargo test -p ubl_runtime --test canon_guardrails
 CONFORM-006|Gate knock deny receipt contract|cargo test -p ubl_gate chips_endpoint_invalid_json_emits_knock_deny_receipt
 CONFORM-007|Runtime subject_did and knock_cid contract|cargo test -p ubl_runtime process_chip_with_context_sets_subject_and_knock_cid && cargo test -p ubl_runtime knock_rejection_produces_signed_deny_receipt

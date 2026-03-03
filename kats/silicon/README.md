@@ -9,8 +9,8 @@ Known-Answer Tests for the `ubl/silicon.*` chip family.
 2. POST silicon_bit_context_equals.json     → receipt with bit CID (b3:...)
 3. POST silicon_circuit_sequential_all.json → (update bits[] with real CIDs) → circuit CID
 4. POST silicon_chip_payment_gate.json      → (update circuits[] with circuit CID) → chip CID
-5. POST silicon_compile_rb_vm.json         → (update chip_cid) → receipt.silicon_compile.bytecode_cid
-6. Use bytecode_cid in @tr.bytecode_hex on any future chip → runs your compiled logic in rb_vm
+5. POST silicon_compile_ubl_vm.json         → (update chip_cid) → receipt.silicon_compile.bytecode_cid
+6. Use bytecode_cid in @tr.bytecode_hex on any future chip → runs your compiled logic in ubl_vm
 ```
 
 ## End-to-End Test (gate running on :4000)
@@ -43,7 +43,7 @@ CHIP=$(curl -sf -X POST http://localhost:4000/v1/chips \
   -d "{\"@type\":\"ubl/silicon.chip\",\"@world\":\"a/lab/t/dev\",
        \"id\":\"CHIP_Test\",\"name\":\"Test Chip\",
        \"circuits\":[\"$CIRCUIT\"],
-       \"hal\":{\"profile\":\"HAL/v0/cpu\",\"targets\":[\"rb_vm/v1\"],\"deterministic\":true},
+       \"hal\":{\"profile\":\"HAL/v0/cpu\",\"targets\":[\"ubl_vm/v1\"],\"deterministic\":true},
        \"version\":\"1.0\"}" | jq -r '.cid')
 echo "Chip CID: $CHIP"
 
@@ -51,7 +51,7 @@ echo "Chip CID: $CHIP"
 RECEIPT=$(curl -sf -X POST http://localhost:4000/v1/chips \
   -H "Content-Type: application/json" \
   -d "{\"@type\":\"ubl/silicon.compile\",\"@world\":\"a/lab/t/dev\",
-       \"chip_cid\":\"$CHIP\",\"target\":\"rb_vm\"}")
+       \"chip_cid\":\"$CHIP\",\"target\":\"ubl_vm\"}")
 echo "Compile receipt:"
 echo "$RECEIPT" | jq '{bytecode_cid: .silicon_compile.bytecode_cid, bytecode_len: .silicon_compile.bytecode_len}'
 ```

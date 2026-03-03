@@ -10,11 +10,11 @@
 //! 7. Fuel accounting: exactly 1 fuel per opcode
 
 use proptest::prelude::*;
-use rb_vm::{
+use std::collections::HashMap;
+use ubl_vm::{
     exec::{CasProvider, SignProvider},
     tlv, Cid, Vm, VmConfig,
 };
-use std::collections::HashMap;
 
 // ── Test harness ─────────────────────────────────────────────────────────────
 
@@ -94,15 +94,15 @@ fn prog_hash_emit(bytes: &[u8]) -> Vec<u8> {
     p
 }
 
-fn run(prog: &[u8]) -> Option<rb_vm::exec::VmOutcome> {
+fn run(prog: &[u8]) -> Option<ubl_vm::exec::VmOutcome> {
     let code = tlv::decode_stream(prog).ok()?;
     let signer = FixedSigner;
-    Vm::new(cfg(), MemCas::new(), &signer, rb_vm::RhoCanon, vec![])
+    Vm::new(cfg(), MemCas::new(), &signer, ubl_vm::RhoCanon, vec![])
         .run(&code)
         .ok()
 }
 
-fn run_ok(prog: &[u8]) -> rb_vm::exec::VmOutcome {
+fn run_ok(prog: &[u8]) -> ubl_vm::exec::VmOutcome {
     run(prog).expect("prog must succeed")
 }
 
@@ -238,7 +238,7 @@ proptest! {
 fn run_arith(prog: &[u8]) {
     let code = tlv::decode_stream(prog).unwrap();
     let signer = FixedSigner;
-    Vm::new(cfg(), MemCas::new(), &signer, rb_vm::RhoCanon, vec![])
+    Vm::new(cfg(), MemCas::new(), &signer, ubl_vm::RhoCanon, vec![])
         .run(&code)
         .expect("must not panic");
 }

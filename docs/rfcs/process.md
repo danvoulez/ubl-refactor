@@ -31,9 +31,9 @@ Small refactors, bug fixes without contract impact, and non-normative docs updat
 
 ## Repository Layout
 
-- Index: `docs/rfc/README.md`
-- New RFC files: `docs/rfc/NNNN-short-title.md`
-- Template: `docs/rfc/TEMPLATE.md`
+- Process doc: `docs/rfcs/process.md`
+- New RFC files: `docs/rfcs/TEMPLATE.md` (copy and rename)
+- Template: `docs/rfcs/TEMPLATE.md`
 
 ## Merge Rules
 
@@ -45,5 +45,5 @@ Small refactors, bug fixes without contract impact, and non-normative docs updat
 
 - RFCs capture forward-looking proposals and public compatibility impact.
 - ADRs capture architecture decisions after commitment.
-- Accepted RFCs may result in one or more ADRs in `docs/adr/`.
+- Accepted RFCs may result in one or more ADRs in `docs/adrs/`.
 

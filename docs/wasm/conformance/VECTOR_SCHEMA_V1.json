@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/LogLine-Foundation/ubl-refactor/docs/wasm/conformance/VECTOR_SCHEMA_V1.json",
+  "title": "UBL WASM Conformance Vector v1",
+  "type": "object",
+  "required": ["id", "version", "kind", "category", "description", "profile", "input", "expected"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^WASM-(POS|NEG)-[0-9]{3}$" },
+    "version": { "const": "v1" },
+    "kind": { "enum": ["positive", "negative"] },
+    "category": { "enum": ["abi", "verify", "capability", "determinism", "resource", "receipt_binding"] },
+    "description": { "type": "string", "minLength": 1 },
+    "profile": { "const": "deterministic_v1" },
+    "input": { "type": "object" },
+    "expected": {
+      "type": "object",
+      "required": ["decision", "code"],
+      "properties": {
+        "decision": { "enum": ["allow", "deny"] },
+        "code": { "type": "string", "minLength": 1 },
+        "receipt_claims": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "positive" } }, "required": ["kind"] },
+      "then": { "properties": { "expected": { "required": ["receipt_claims"] } } }
+    }
+  ]
+}

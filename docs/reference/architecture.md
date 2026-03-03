@@ -2,7 +2,7 @@
 
 **Status**: Active normative architecture document
 **Date**: February 20, 2026 (rev 4)
-**Implementation status source**: `TASKLIST.md`
+**Implementation status source**: `docs/reference/certified-runtime.md`
 **Documentation index**: `docs/index.md`
 
 > **Universal Business Leverage** leverages the best of determinism with the best of the stochasticism of LLMs — both comfortable and at maximum potential, with limits expressed by clear rules.
@@ -55,15 +55,6 @@ Chips are the input *and* the output. A receipt is a chip. A policy is a chip. A
 
 Five steps. No acronyms. Works for auth, payments, video, documents, AI advisories — any domain.
 
-### Vision Handoff
-
-Strategic vision, long-horizon protocol narrative, and roadmap content now live in:
-
-- `docs/visao/MANIFESTO_DA_REINVENCAO.md`
-- `docs/visao/VCX-Core.md`
-
-This architecture document stays implementation-oriented and normative.
-
 ---
 
 ## 1. Origin and Evolution
@@ -95,8 +86,8 @@ The four Laws remain **inviolable**. Everything else is implementation detail th
 
 | Crate | Role | Status |
 |---|---|---|
-| `ubl_ai_nrf1` | NRF-1.1 canonical encoding, CID (BLAKE3), Universal Envelope, chip format | ✅ Working (108 tests) |
-| `rb_vm` | Deterministic stack VM, TLV bytecode, fuel metering | ✅ Working (79 tests) |
+| `ubl_nrf` | NRF-1.1 canonical encoding, CID (BLAKE3), Universal Envelope, chip format | ✅ Working (108 tests) |
+| `ubl_vm` | Deterministic stack VM, TLV bytecode, fuel metering | ✅ Working (79 tests) |
 | `ubl_runtime` | Full pipeline: KNOCK→WA→CHECK→TR→WF, auth, onboarding, genesis, advisory, event bus | ✅ Working (352 tests) |
 | `ubl_receipt` | UnifiedReceipt with stage evolution, HMAC-BLAKE3 auth chain, Decision enum | ✅ Working (22 tests) |
 | `ubl_chipstore` | CAS storage, InMemory + Sled backends, indexing, query builder | ✅ Wired into pipeline WF stage |
@@ -111,7 +102,7 @@ The four Laws remain **inviolable**. Everything else is implementation detail th
 
 | Module | Role |
 |---|---|
-| `pipeline/mod.rs` + `pipeline/processing.rs` + `pipeline/stages/*` | Modular KNOCK→WA→CHECK→TR→WF orchestration, real rb_vm execution at TR |
+| `pipeline/mod.rs` + `pipeline/processing.rs` + `pipeline/stages/*` | Modular KNOCK→WA→CHECK→TR→WF orchestration, real ubl_vm execution at TR |
 | `auth.rs` | 8 onboarding chip types (`ubl/app`, `ubl/user`, `ubl/tenant`, `ubl/membership`, `ubl/token`, `ubl/revoke`, `ubl/worldscope`, `ubl/role`), body validation, dependency chain enforcement (34 unit + 10 integration tests) |
 | `genesis.rs` | Bootstrap genesis chip in ChipStore at startup, idempotent, self-signed |
 | `knock.rs` | Input validation: size ≤1MB, depth ≤32, array ≤10K, no dup keys, valid UTF-8, required `@type`/`@world` (11 tests) |
@@ -127,10 +118,10 @@ The four Laws remain **inviolable**. Everything else is implementation detail th
 ### 2.1 What Works End-to-End Today
 
 ```text
-POST /v1/chips → KNOCK (validate) → WA (seal intent) → CHECK (policy + onboarding) → TR (rb_vm) → WF (receipt + store)
+POST /v1/chips → KNOCK (validate) → WA (seal intent) → CHECK (policy + onboarding) → TR (ubl_vm) → WF (receipt + store)
 ```
 
-**Working**: Full 5-stage pipeline with real rb_vm execution. Chips stored in ChipStore. UnifiedReceipt evolves through stages. Genesis bootstrap at startup. Onboarding dependency chain enforced (app→user→tenant→membership→token→revoke). Canonical error responses. Advisory engine. AI Passport. Event bus. Gate serves real ChipStore lookups and receipt traces.
+**Working**: Full 5-stage pipeline with real ubl_vm execution. Chips stored in ChipStore. UnifiedReceipt evolves through stages. Genesis bootstrap at startup. Onboarding dependency chain enforced (app→user→tenant→membership→token→revoke). Canonical error responses. Advisory engine. AI Passport. Event bus. Gate serves real ChipStore lookups and receipt traces.
 
 **Hardening in progress**: reproducible-build hardening remains. Runtime self-attestation, structured tracing, and durability boundary are implemented.
 
@@ -142,13 +133,13 @@ POST /v1/chips → KNOCK (validate) → WA (seal intent) → CHECK (policy + onb
 
 | Decision | Value | Rationale |
 |---|---|---|
-| **Hash** | BLAKE3, 32 bytes | Fast, parallel, no length-extension. `rb_vm` already uses it. |
+| **Hash** | BLAKE3, 32 bytes | Fast, parallel, no length-extension. `ubl_vm` already uses it. |
 | **CID format** | `b3:` + lowercase hex, 64 chars | `b3:a1b2c3...` (32 bytes = 64 hex chars) |
-| **Strings** | NFC normalized, BOM rejected | Already enforced in `ubl_ai_nrf1::nrf.rs` |
+| **Strings** | NFC normalized, BOM rejected | Already enforced in `ubl_nrf::nrf.rs` |
 | **Prohibited chars** | `\u0000`–`\u001F` in source YAML | Escape required in NRF string encoding |
 | **Surrogates** | Reject unpaired surrogates | Invalid UTF-8 → DENY at KNOCK |
 | **Numbers** | `i64` for simple integers; UNC-1 `@num` objects for all other numerics | `json_to_nrf` rejects raw floats. See §3.3 UNC-1. |
-| **Decimals** | UNC-1 `dec/1` (`mantissa × 10^−scale`, bigint strings) | Replaces planned `NrfValue::Decimal(i128, u8)`. See [docs/canon/UNC-1.md](./docs/canon/UNC-1.md). |
+| **Decimals** | UNC-1 `dec/1` (`mantissa × 10^−scale`, bigint strings) | Replaces planned `NrfValue::Decimal(i128, u8)`. See [docs/reference/unc-1.md](./unc-1.md). |
 | **Null vs absence** | Null values REMOVED from maps | Absence ≠ null; `{"a": null}` canonicalizes to `{}` |
 | **Map key order** | Strict Unicode code point ascending, post-NFC | Already uses `BTreeMap` in `nrf.rs` |
 | **Duplicate keys** | Reject (DENY) | Must fail at parse, not silently deduplicate |
@@ -168,7 +159,7 @@ All non-integer numbers use **UNC-1** (`@num` tagged objects). No IEEE-754 in ca
 - Rounding mode is explicit at the operation site, never in the data
 - `f64` imports become `bnd/1` (minimal interval) — imprecision is always visible
 - NRF-1 encodes UNC-1 atoms as MAP — zero changes to encoding layer
-- Full spec: [docs/canon/UNC-1.md](./docs/canon/UNC-1.md)
+- Full spec: [docs/reference/unc-1.md](./unc-1.md)
 - Crate: `crates/ubl_unc1/`
 - Schema: `schemas/unc-1.schema.json`
 - KATs: `kats/unc1/unc1_kats.v1.json`
@@ -225,7 +216,7 @@ One format. Always anchored. Always parseable by the same code. An LLM reading a
 
 ### 3.3 CID Contract (BLAKE3)
 
-**Current state**: `ubl_ai_nrf1::compute_cid` and `rb_vm` both use BLAKE3. CID is derived from NRF bytes and encoded as `b3:<hex>`.
+**Current state**: `ubl_nrf::compute_cid` and `ubl_vm` both use BLAKE3. CID is derived from NRF bytes and encoded as `b3:<hex>`.
 
 **Contract**: one hash function everywhere in the trust path.
 
@@ -255,7 +246,7 @@ Flags byte (reserved): bit 0 = ghost, bit 1 = signed, bits 2-7 = reserved.
 
 ### 4.1 Current State
 
-`rb_vm` is the most mature crate. It implements a deterministic stack VM with:
+`ubl_vm` is the most mature crate. It implements a deterministic stack VM with:
 - **19 opcodes** in TLV (Type-Length-Value) bytecode format
 - **Fuel metering** — 1 unit per opcode, configurable limit
 - **No-IO by construction** — only `CasProvider` and `SignProvider` traits
@@ -314,7 +305,7 @@ Flags byte (reserved): bit 0 = ghost, bit 1 = signed, bits 2-7 = reserved.
 ### 5.1 Stage Flow
 
 ```
-KNOCK → WA (ghost) → CHECK (policy) → TR (rb_vm) → WF (final receipt)
+KNOCK → WA (ghost) → CHECK (policy) → TR (ubl_vm) → WF (final receipt)
   │         │              │               │              │
   │         │              │               │              └─ Store in ChipStore
   │         │              │               └─ Execute bytecode, emit RC
@@ -362,9 +353,9 @@ struct StageExecution {
 
 **CID evolution**: `receipt_cid` recomputed after each stage append. The WF `receipt_cid` is the final canonical CID.
 
-### 5.3 rb_vm Pipeline Integration (✅ Implemented — S2.1 + P1 registry wiring)
+### 5.3 ubl_vm Pipeline Integration (✅ Implemented — S2.1 + P1 registry wiring)
 
-TR stage creates a `Vm` instance and executes TLV bytecode selected by `TransitionRegistry` (not a fixed passthrough blob). `PipelineCas`, `PipelineSigner`, and `PipelineCanon` implement rb_vm traits. Fuel usage, bytecode provenance, and adapter metadata are recorded in TR `vm_state`.
+TR stage creates a `Vm` instance and executes TLV bytecode selected by `TransitionRegistry` (not a fixed passthrough blob). `PipelineCas`, `PipelineSigner`, and `PipelineCanon` implement ubl_vm traits. Fuel usage, bytecode provenance, and adapter metadata are recorded in TR `vm_state`.
 
 Resolution order:
 1. chip override `@tr.bytecode_hex`
@@ -533,7 +524,7 @@ Example: `cas/a1/b2/b3:a1b2c3d4e5f6...`
 
 - GET is O(1) by CID
 - Idempotent writes (content-addressed)
-- `FsCas` in `rb_vm` already implements this with BLAKE3
+- `FsCas` in `ubl_vm` already implements this with BLAKE3
 
 ### 8.3 Ledger (✅ Implemented — S3.4)
 
@@ -784,7 +775,7 @@ Two distinct determinism levels exist in the pipeline:
 
 **Chip CID — fully deterministic.**
 Same canonical content → same NRF-1 bytes → same BLAKE3 hash → same `b3:` CID.
-This holds across machines, runs, and time. Verified by `rb_vm` golden CID tests.
+This holds across machines, runs, and time. Verified by `ubl_vm` golden CID tests.
 
 **Receipt CID — contextually unique.**
 Receipts include `frozen_time` (WA), `nonce` (anti-replay), `timestamp` per stage,
@@ -797,7 +788,7 @@ Receipt CIDs are identifiers of *events*, not *content*. The auth chain
 (`HMAC-BLAKE3` per stage) proves ordering and integrity within a single execution,
 not reproducibility across executions.
 
-Verified by: `rb_vm` golden CID tests + pipeline integration tests + `receipt_cid_is_deterministic` test (same inputs including forced timestamp → same CID).
+Verified by: `ubl_vm` golden CID tests + pipeline integration tests + `receipt_cid_is_deterministic` test (same inputs including forced timestamp → same CID).
 
 ### 15.2 Opcode Cost Stability
 
@@ -823,8 +814,8 @@ _Note: sprint-phase test numbers in this section are historical snapshots at del
 
 | Sprint | Goal | Key Deliverables | Tests |
 |---|---|---|---|
-| **S1** — Canon + CID | Lock canonical encoding, Universal Envelope | NRF-1.1 encoding, CID computation, `ublx` CLI, type code table | 64 (ubl_ai_nrf1) |
-| **S2** — RB-VM + Policy | Wire rb_vm into pipeline, lock policy resolution | Real TR stage execution, fuel ceiling, unified `Decision` enum, nonce/anti-replay, policy lockfile | 33 (rb_vm) |
+| **S1** — Canon + CID | Lock canonical encoding, Universal Envelope | NRF-1.1 encoding, CID computation, `ublx` CLI, type code table | 64 (ubl_nrf) |
+| **S2** — RB-VM + Policy | Wire ubl_vm into pipeline, lock policy resolution | Real TR stage execution, fuel ceiling, unified `Decision` enum, nonce/anti-replay, policy lockfile | 33 (ubl_vm) |
 | **S3** — Receipts + Storage + Gate | Unified receipt, persistent storage, end-to-end flow | `UnifiedReceipt` with HMAC chain, ChipStore in pipeline, `NdjsonLedger`, KNOCK stage, canonical errors, gate rewrite, genesis bootstrap | 22 (receipt) + 290 (runtime) |
 | **S4** — WASM + URLs + EventBus | External effects, observability, portable URLs | WASM adapter ABI, adapter registry, Rich URL generation, event bus with idempotency, `ublx explain` | — |
 
@@ -842,7 +833,7 @@ _Note: sprint-phase test numbers in this section are historical snapshots at del
 |---|---|---|
 | **H1** Signing key from env | `ubl_kms` crate, `signing_key_from_env()`, domain separation | 16 |
 | **H2** Real DID resolution | All placeholder DIDs replaced, `did:key:z...` derived from Ed25519 via `ubl_kms` | — |
-| **H3** `NaiveCanon` → full ρ | `RhoCanon` in `rb_vm/src/canon.rs`, NFC, BOM rejection, null stripping, key sorting, idempotent | 19 |
+| **H3** `NaiveCanon` → full ρ | `RhoCanon` in `ubl_vm/src/canon.rs`, NFC, BOM rejection, null stripping, key sorting, idempotent | 19 |
 | **H4** P0→P1 rollout automation | Chip-native governance flow (proposal/activation receipts + traces + witness), no external preflight script as source of truth | — |
 | **H7** Signature domain separation | `domain::RECEIPT`, `RB_VM`, `CAPSULE`, `CHIP` in `ubl_kms` | — |
 | **H8** Rate limiting | Sliding-window per-key, `GateRateLimiter` (IP/tenant/DID), `prune()` | 13 |
@@ -874,10 +865,10 @@ Method: `cargo test -p <crate> -- --list` (unit + integration test harness total
 
 | Crate | Tests |
 |---|---|
-| `rb_vm` | 79 |
+| `ubl_vm` | 79 |
 | `ubl_receipt` | 22 |
 | `ubl_runtime` | 352 |
-| `ubl_ai_nrf1` | 108 |
+| `ubl_nrf` | 108 |
 | `ubl_kms` | 16 |
 | `ubl_unc1` | 57 |
 | `ubl_chipstore` | 10 |
@@ -893,8 +884,8 @@ Current hardening baseline is closed for critical paths. Incremental type-safety
 
 Future-facing protocol horizons were moved out of this normative architecture file and consolidated in:
 
-- `docs/visao/MANIFESTO_DA_REINVENCAO.md`
-- `docs/visao/VCX-Core.md`
+- `docs/reference/certified-runtime.md`
+- `docs/rfcs/process.md`
 
 ---
 
@@ -902,21 +893,21 @@ Future-facing protocol horizons were moved out of this normative architecture fi
 
 | Item | Location | Severity | Status |
 |---|---|---|---|
-| ~~SHA2-256 used instead of BLAKE3~~ | ~~`ubl_ai_nrf1::compute_cid`~~ | ~~🔴 Critical — CID mismatch with rb_vm~~ | ✅ Fixed — BLAKE3 unified across runtime and VM |
+| ~~SHA2-256 used instead of BLAKE3~~ | ~~`ubl_nrf::compute_cid`~~ | ~~🔴 Critical — CID mismatch with ubl_vm~~ | ✅ Fixed — BLAKE3 unified across runtime and VM |
 | ~~Two `Decision` enums~~ | ~~`ubl_runtime` vs `ubl_receipt`~~ | ~~🟡 Confusing~~ | ✅ Fixed S2.2 — unified to `ubl_receipt::Decision` |
-| ~~TR stage is placeholder~~ | ~~`pipeline.rs`~~ | ~~🔴 Critical~~ | ✅ Fixed S2.1 — real rb_vm execution |
+| ~~TR stage is placeholder~~ | ~~`pipeline.rs`~~ | ~~🔴 Critical~~ | ✅ Fixed S2.1 — real ubl_vm execution |
 | ~~Hardcoded signing key~~ | ~~`ubl_receipt::SIGNING_KEY`~~ | ~~🟡 Dev only~~ | ✅ Fixed H1/H14 — `ubl_kms`, `signing_key_from_env()` |
 | ~~`ubl_ledger` is all no-ops~~ | ~~`ubl_ledger::lib.rs`~~ | ~~🔴 Critical~~ | ✅ Fixed S3.4 — `NdjsonLedger` + `InMemoryLedger` |
 | ~~ChipStore not in pipeline~~ | ~~`UblPipeline`~~ | ~~🔴 Critical~~ | ✅ Fixed S3.3 — `Arc<ChipStore>` persists at WF |
 | ~~No nonce/anti-replay~~ | ~~WA receipts~~ | ~~🟡 Replay possible~~ | ✅ Fixed S2.3 — 16-byte hex nonce + PR-A P0.1 rigid idempotency |
 | ~~Placeholder DIDs~~ | ~~`"did:key:placeholder"` in WA stage~~ | ~~🟡 Must come from auth~~ | ✅ Fixed H2 — real `did:key:z...` from Ed25519 via `ubl_kms` |
-| ~~`NaiveCanon` in rb_vm~~ | ~~Sorts keys but doesn't do full ρ~~ | ~~🟡 Must delegate~~ | ✅ Fixed H3 — `RhoCanon` with full ρ rules (19 tests) |
+| ~~`NaiveCanon` in ubl_vm~~ | ~~Sorts keys but doesn't do full ρ~~ | ~~🟡 Must delegate~~ | ✅ Fixed H3 — `RhoCanon` with full ρ rules (19 tests) |
 | ~~Hardcoded duration_ms~~ | ~~`50` in WF stage~~ | ~~🟢 Minor~~ | ✅ Fixed S3.7 — real `Instant::now()` timing |
 | ~~Separate WA/WF receipts~~ | ~~`ubl_receipt`~~ | ~~🔴 Critical~~ | ✅ Fixed S3.1 — `UnifiedReceipt` with HMAC chain |
 | ~~KNOCK implicit~~ | ~~`pipeline.rs`~~ | ~~🟡 Missing validation~~ | ✅ Fixed S3.5 — explicit `knock.rs` (11 tests) |
 | ~~Gate GET stubs~~ | ~~`ubl_gate`~~ | ~~🟡 Non-functional~~ | ✅ Fixed S3.3 — real ChipStore lookups |
 | ~~No canonical errors~~ | ~~HTTP responses~~ | ~~🟡 Inconsistent~~ | ✅ Fixed S3.6 + PR-B P1.7 — `UblError` with 8-category taxonomy |
-| ~~4 pre-existing chip_format test failures~~ | ~~`ubl_ai_nrf1::chip_format`~~ | ~~🟡 Tests exist but fail~~ | ✅ Fixed C2 — tests were already passing |
+| ~~4 pre-existing chip_format test failures~~ | ~~`ubl_nrf::chip_format`~~ | ~~🟡 Tests exist but fail~~ | ✅ Fixed C2 — tests were already passing |
 | ~~No runtime self-attestation~~ | ~~`ubl_runtime`~~ | ~~🟡 Needed for PS3~~ | ✅ Fixed H11 — `RuntimeInfo::capture()`, BLAKE3 binary hash, `BuildMeta` |
 | ~~No structured tracing~~ | ~~All crates~~ | ~~🟡 `eprintln!` only~~ | ✅ Fixed F2 — tracing spans and structured logs wired |
 | ~~Newtype pattern needed~~ | ~~All crates~~ | ~~🟢 Minor~~ | ✅ Fixed H5 — `ubl_types` newtypes integrated |

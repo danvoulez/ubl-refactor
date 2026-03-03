@@ -1360,7 +1360,7 @@ impl UblPipeline {
         policy_trace: &[PolicyTraceEntry],
     ) -> Result<SiliconCompileOutcome, PipelineError> {
         use crate::silicon_chip::{
-            compile_chip_to_rb_vm, parse_silicon, resolve_chip_graph, SiliconRequest,
+            compile_chip_to_ubl_vm, parse_silicon, resolve_chip_graph, SiliconRequest,
         };
 
         let compile = match parse_silicon(request.chip_type, request.body())
@@ -1415,7 +1415,7 @@ impl UblPipeline {
         let bit_count: usize = circuits.iter().map(|c| c.nodes.len()).sum();
 
         // Compile to TLV bytecode.
-        let bytecode = compile_chip_to_rb_vm(&circuits)
+        let bytecode = compile_chip_to_ubl_vm(&circuits)
             .map_err(|e| PipelineError::InvalidChip(format!("silicon.compile: {}", e)))?;
         let bytecode_len = bytecode.len();
 

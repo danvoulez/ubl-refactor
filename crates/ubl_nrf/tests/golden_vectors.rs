@@ -9,7 +9,7 @@
 //!
 //! The golden file is the single source of truth. Adding new vectors:
 //!   1. Add the entry to the gen_golden example
-//!   2. Run `cargo run --example gen_golden -p ubl_ai_nrf1 > kats/golden/canon_v1.json`
+//!   2. Run `cargo run --example gen_golden -p ubl_nrf > kats/golden/canon_v1.json`
 //!   3. Commit both the example change and the updated JSON
 //!
 //! PF-01 contract: same canonical input → same bytes → same CID, forever.
