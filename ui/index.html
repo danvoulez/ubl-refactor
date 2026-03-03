@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UBL Premium Control Center</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar glass">
+        <div class="brand">
+          <div class="brand-mark">U</div>
+          <div>
+            <h1>UBL Command</h1>
+            <p>Premium Ops + AI</p>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <button class="menu-item active" data-panel="chat">AI Chefe</button>
+          <button class="menu-item" data-panel="observability">Observabilidade</button>
+          <button class="menu-item" data-panel="settings">Settings</button>
+        </nav>
+
+        <section class="health-card">
+          <h2>Saúde Geral</h2>
+          <p id="health-score">96%</p>
+          <small>SLO + Integridade + Latência</small>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar glass">
+          <div>
+            <h2 id="panel-title">AI Chat com Agente Chefe</h2>
+            <p id="panel-subtitle">Acompanhamento estratégico e decisões assistidas</p>
+          </div>
+          <div class="status-pill">● Produção Estável</div>
+        </header>
+
+        <section class="panel active" id="chat-panel">
+          <div class="chat-layout">
+            <article class="chat-window glass">
+              <div class="chat-messages" id="chat-messages"></div>
+              <form id="chat-form" class="chat-input-row">
+                <input id="chat-input" placeholder="Pergunte ao agente chefe sobre estratégia, risco, incidentes..." />
+                <button type="submit">Enviar</button>
+              </form>
+            </article>
+
+            <aside class="assistant-context glass">
+              <h3>Contexto do Chefe</h3>
+              <ul>
+                <li>Prioridade: Confiabilidade e governança</li>
+                <li>Modelo: GPT-5.2-Codex profile</li>
+                <li>Modo: Operações + Produto</li>
+                <li>Memória local da sessão ativa</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="panel" id="observability-panel">
+          <div class="grid-3">
+            <article class="metric-card glass">
+              <h3>Latência p95</h3>
+              <p id="latency-value">112ms</p>
+              <small class="ok">Dentro do alvo (&lt; 150ms)</small>
+            </article>
+            <article class="metric-card glass">
+              <h3>Erro 5xx</h3>
+              <p id="error-value">0.17%</p>
+              <small class="ok">Abaixo do budget</small>
+            </article>
+            <article class="metric-card glass">
+              <h3>Throughput</h3>
+              <p id="tps-value">7.8k req/min</p>
+              <small>Estável no último ciclo</small>
+            </article>
+          </div>
+
+          <article class="timeline glass">
+            <h3>Incidentes Recentes</h3>
+            <div id="incident-list"></div>
+          </article>
+        </section>
+
+        <section class="panel" id="settings-panel">
+          <form id="settings-form" class="settings-grid">
+            <article class="glass settings-block">
+              <h3>AI &amp; Conversa</h3>
+              <label>
+                Temperatura
+                <input type="range" min="0" max="1" step="0.1" id="temperature" />
+                <span id="temperature-value"></span>
+              </label>
+              <label>
+                Respostas longas
+                <input type="checkbox" id="long-replies" />
+              </label>
+              <label>
+                Memória contextual
+                <input type="checkbox" id="session-memory" />
+              </label>
+            </article>
+
+            <article class="glass settings-block">
+              <h3>Observabilidade</h3>
+              <label>
+                Auto-refresh (segundos)
+                <input type="number" min="5" max="120" id="refresh-seconds" />
+              </label>
+              <label>
+                Alertas em tempo real
+                <input type="checkbox" id="live-alerts" />
+              </label>
+              <label>
+                Modo de telemetria
+                <select id="telemetry-mode">
+                  <option value="strict">Strict (audit first)</option>
+                  <option value="balanced">Balanced</option>
+                  <option value="performance">Performance first</option>
+                </select>
+              </label>
+            </article>
+
+            <article class="glass settings-block">
+              <h3>Segurança e Perfil</h3>
+              <label>
+                Perfil de acesso
+                <select id="access-profile">
+                  <option>Chief Operator</option>
+                  <option>Platform Admin</option>
+                  <option>Auditor</option>
+                </select>
+              </label>
+              <label>
+                MFA obrigatório
+                <input type="checkbox" id="mfa-required" />
+              </label>
+              <button type="submit" class="save-btn">Salvar configurações</button>
+              <p id="save-status"></p>
+            </article>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
